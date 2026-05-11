@@ -1,0 +1,77 @@
+{
+  "app": {
+    "name": "UA Studentenportaal",
+    "footer": "Universiteit Antwerpen"
+  },
+  "auth": {
+    "signIn": "Aanmelden met Microsoft",
+    "signOut": "Afmelden",
+    "signInFailed": "Aanmelden mislukt. Probeer het opnieuw."
+  },
+  "overview": {
+    "greeting": "Hallo {name}, ",
+    "intro": "Beheer je aanvragen voor financiële ondersteuning bij de Universiteit Antwerpen.",
+    "startRequest": "Aanvraag starten",
+    "myRequests": "Mijn aanvragen",
+    "myRequestsCount": "{count, plural, =0 {Je hebt nog geen aanvragen ingediend.} one {Je hebt 1 aanvraag.} other {Je hebt # aanvragen.}}"
+  },
+  "myRequests": {
+    "title": "Mijn aanvragen",
+    "empty": "Nog geen aanvragen",
+    "filenumber": "Dossiernummer",
+    "type": "Type",
+    "createdOn": "Aangemaakt",
+    "status": "Status",
+    "action": "Actie",
+    "view": "Bekijken",
+    "actionRequired": "Actie vereist"
+  },
+  "requestType": {
+    "title": "Aanvraag types",
+    "intro": "Maak een keuze uit de beschikbare opties om uw aanvraagproces te starten of uw volmacht te beheren.",
+    "social": "Aanvraag sociale toelage",
+    "advance": "Aanvraag voorschot studietoelage",
+    "powerOfAttorney": "Verlenen van volmacht"
+  },
+  "wizard": {
+    "step": "Stap {current} van {total}",
+    "next": "Volgende stap",
+    "previous": "Vorige stap",
+    "submit": "Aanvraag indienen",
+    "cancel": "Annuleren",
+    "save": "Wijzigingen opslaan"
+  },
+  "documents": {
+    "title": "Laad de nodige documenten op",
+    "intro": "Een rood sterretje geeft een verplicht document aan.",
+    "notApplicable": "Niet van toepassing",
+    "upload": "Bestand opladen",
+    "uploading": "Bezig met opladen…",
+    "required": "Vereist",
+    "uploaded": "Opgeladen"
+  },
+  "messages": {
+    "title": "Berichten",
+    "intro": "Bekijk hier de berichten van je dossierbehandelaar. Heb je vragen of opmerkingen? Typ ze hieronder.",
+    "send": "Bericht verzenden",
+    "placeholder": "Schrijf een bericht…",
+    "empty": "Nog geen berichten in dit dossier."
+  },
+  "submitted": {
+    "title": "Je aanvraag werd ingediend",
+    "intro": "We laten je via berichten weten zodra een dossierbehandelaar je aanvraag oppakt.",
+    "viewMessages": "Bekijk berichten",
+    "home": "Terug naar startpagina"
+  },
+  "errors": {
+    "title": "Er ging iets mis",
+    "unknown": "Er ging iets mis. Probeer het opnieuw of contacteer de beheerder.",
+    "unauthorized": "Je bent niet (meer) aangemeld. Meld je opnieuw aan.",
+    "forbidden": "Je hebt geen toegang tot dit dossier.",
+    "notFound": "Niet gevonden.",
+    "conflict": "Er bestaat al een dossier van dit type. Open je bestaande aanvraag.",
+    "tooLarge": "Het bestand is te groot.",
+    "unsupportedType": "Dit bestandstype wordt niet ondersteund.",
+    "retry": "Opnieuw proberen"
+  }
+}

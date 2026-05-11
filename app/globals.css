@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ua-navy ring-offset-2;
+  }
+}
+
+@layer components {
+  .ua-link {
+    @apply text-ua-navy underline-offset-4 hover:underline;
+  }
+  .ua-skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50
+           focus:rounded focus:bg-ua-navy focus:px-4 focus:py-2 focus:text-white;
+  }
+}

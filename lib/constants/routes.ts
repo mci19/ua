@@ -1,0 +1,16 @@
+export const routes = {
+  login: "/login",
+  overview: "/",
+  unknownUser: "/onboarding/unknown",
+  sisaGrant: "/onboarding/sisa",
+  myRequests: "/aanvragen",
+  newRequest: "/aanvragen/nieuw",
+  newSocialAllowance: "/aanvragen/nieuw/sociale-toelage",
+  newSocialAllowanceOther: "/aanvragen/nieuw/sociale-toelage/scenario-4",
+  request: (id: string) => `/aanvragen/${id}`,
+  requestForm: (id: string) => `/aanvragen/${id}/formulier`,
+  requestDocuments: (id: string) => `/aanvragen/${id}/documenten`,
+  requestMessages: (id: string) => `/aanvragen/${id}/berichten`,
+  requestVoorschot: (id: string) => `/aanvragen/${id}/voorschot`,
+  requestSubmitted: (id: string) => `/aanvragen/${id}/ingediend`,
+} as const;
