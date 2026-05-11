@@ -70,36 +70,47 @@ export function MessageThread({ requestId, initialComments }: MessageThreadProps
           </p>
         ) : (
           <ul className="space-y-4">
-            {comments.map((c, i) => (
-              <li
-                key={c.ua_commentid ?? `${i}-${c.createdon}`}
-                className={cn(
-                  "flex",
-                  c.ua_authortype === "dossierbeheerder" ? "justify-start" : "justify-end",
-                )}
-              >
-                <div
-                  className={cn(
-                    "max-w-[80%] rounded-lg px-4 py-3 shadow-sm",
-                    c.ua_authortype === "dossierbeheerder"
-                      ? "bg-ua-gray-light/60 text-foreground"
-                      : "bg-ua-navy text-white",
-                  )}
+            {comments.map((c) => {
+              const isStaff = c.role === "dossierbeheerder";
+              return (
+                <li
+                  key={c.id}
+                  className={cn("flex flex-col", isStaff ? "items-start" : "items-end")}
                 >
-                  <p className="whitespace-pre-wrap text-label">{c.ua_comment}</p>
-                  <p
+                  <span
                     className={cn(
-                      "mt-1 text-small",
-                      c.ua_authortype === "dossierbeheerder"
-                        ? "text-muted-foreground"
-                        : "text-white/70",
+                      "mb-1 inline-flex items-center gap-2 rounded-full px-2.5 py-0.5 text-small font-medium",
+                      isStaff
+                        ? "bg-ua-red/10 text-ua-red"
+                        : "bg-ua-navy/10 text-ua-navy",
                     )}
                   >
-                    {formatDateTime(c.createdon)}
-                  </p>
-                </div>
-              </li>
-            ))}
+                    {isStaff ? "Dossierbeheerder" : "Student"}
+                    {c.authorName ? (
+                      <span className="text-muted-foreground">· {c.authorName}</span>
+                    ) : null}
+                  </span>
+                  <div
+                    className={cn(
+                      "max-w-[80%] rounded-lg px-4 py-3 shadow-sm",
+                      isStaff
+                        ? "rounded-tl-none bg-ua-gray-light/60 text-foreground"
+                        : "rounded-tr-none bg-ua-navy text-white",
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap text-label">{c.text}</p>
+                    <p
+                      className={cn(
+                        "mt-1 text-small",
+                        isStaff ? "text-muted-foreground" : "text-white/70",
+                      )}
+                    >
+                      {formatDateTime(c.createdOn)}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
             <li ref={endRef} aria-hidden="true" />
           </ul>
         )}

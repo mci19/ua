@@ -5,14 +5,25 @@ import { AlertTriangle, ChevronRight } from "lucide-react";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { formatDate } from "@/lib/utils/date";
 import { routes } from "@/lib/constants/routes";
-import { REQUEST_STATUS, REQUEST_SUBSTATUS } from "@/lib/constants/statuses";
+import {
+  REQUEST_STATUS_CODE,
+  isActionRequired,
+  isEditable,
+} from "@/lib/constants/statuses";
 import type { RequestRow } from "@/lib/dataverse/types";
 import { cn } from "@/lib/utils/cn";
 
 function targetHref(row: RequestRow): string {
-  return row.ua_satusreason === REQUEST_STATUS.IN_AANMAAK
+  return isEditable(row.statuscode)
     ? routes.requestForm(row.ua_requestid)
     : routes.requestMessages(row.ua_requestid);
+}
+
+function isViewable(row: RequestRow): boolean {
+  // Mirror the canvas: hide the deep-link from the list while the dossier sits
+  // in "In wacht" (waiting for staff triage), since there's nothing meaningful
+  // to look at yet.
+  return row.statuscode !== REQUEST_STATUS_CODE.IN_WACHT;
 }
 
 export function RequestsList({ rows }: { rows: RequestRow[] }) {
@@ -20,12 +31,10 @@ export function RequestsList({ rows }: { rows: RequestRow[] }) {
     <div>
       {/* Mobile cards */}
       <ul className="space-y-3 md:hidden">
-        {rows.map((row) => (
-          <li key={row.ua_requestid}>
-            <Link
-              href={targetHref(row)}
-              className="block rounded-lg border border-ua-gray-light/70 bg-white p-4 shadow-sm transition hover:border-ua-navy"
-            >
+        {rows.map((row) => {
+          const viewable = isViewable(row);
+          const inner = (
+            <>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-label font-semibold text-ua-navy">
@@ -38,17 +47,33 @@ export function RequestsList({ rows }: { rows: RequestRow[] }) {
                     Aangemaakt {formatDate(row.createdon)}
                   </p>
                 </div>
-                <StatusBadge status={row.ua_satusreason} />
+                <StatusBadge status={row.statuscode} />
               </div>
-              {row.ua_substatuscode === REQUEST_SUBSTATUS.ACTIE_VEREIST ? (
+              {isActionRequired(row.ua_substatuscode) ? (
                 <p className="mt-3 inline-flex items-center gap-2 text-small text-ua-red">
                   <AlertTriangle className="h-4 w-4" aria-hidden="true" />
                   Actie vereist
                 </p>
               ) : null}
-            </Link>
-          </li>
-        ))}
+            </>
+          );
+          return (
+            <li key={row.ua_requestid}>
+              {viewable ? (
+                <Link
+                  href={targetHref(row)}
+                  className="block rounded-lg border border-ua-gray-light/70 bg-white p-4 shadow-sm transition hover:border-ua-navy"
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div className="block rounded-lg border border-ua-gray-light/70 bg-white p-4 shadow-sm">
+                  {inner}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       {/* Desktop table */}
@@ -73,8 +98,8 @@ export function RequestsList({ rows }: { rows: RequestRow[] }) {
                 <Td>{formatDate(row.createdon)}</Td>
                 <Td>
                   <div className="flex items-center gap-2">
-                    <StatusBadge status={row.ua_satusreason} />
-                    {row.ua_substatuscode === REQUEST_SUBSTATUS.ACTIE_VEREIST ? (
+                    <StatusBadge status={row.statuscode} />
+                    {isActionRequired(row.ua_substatuscode) ? (
                       <span
                         className="inline-flex items-center gap-1 text-small text-ua-red"
                         title="Actie vereist"
@@ -86,12 +111,18 @@ export function RequestsList({ rows }: { rows: RequestRow[] }) {
                   </div>
                 </Td>
                 <Td className="text-right">
-                  <Link
-                    href={targetHref(row)}
-                    className="inline-flex items-center gap-1 text-ua-navy hover:underline"
-                  >
-                    Bekijken <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                  </Link>
+                  {isViewable(row) ? (
+                    <Link
+                      href={targetHref(row)}
+                      className="inline-flex items-center gap-1 text-ua-navy hover:underline"
+                    >
+                      Bekijken <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  ) : (
+                    <span className="text-small text-muted-foreground">
+                      In wachtrij
+                    </span>
+                  )}
                 </Td>
               </tr>
             ))}

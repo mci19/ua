@@ -13,7 +13,7 @@ export const POST = withApi<{ id: string }>(async (_req, ctx) => {
   const row = await getRequest(auth, id);
   const student = await getCurrentStudent(auth);
   if (!student) throw new ApiError(404, "Student not found");
-  if (row._ua_student_value !== student.contactid) {
+  if (row._ua_studentid_value !== student.contactid) {
     throw new ApiError(403, "Not your request");
   }
   await submitRequest(auth, id);

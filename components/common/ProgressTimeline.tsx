@@ -21,7 +21,7 @@ export function ProgressTimeline({ steps, activeStepId, className }: ProgressTim
   return (
     <nav aria-label="Stappen" className={cn("w-full", className)}>
       {/* Mobile: horizontal stepper */}
-      <ol className="flex w-full items-center justify-between gap-2 lg:hidden">
+      <ol className="flex w-full items-start justify-between gap-2 lg:hidden">
         {steps.map((step, i) => {
           const Icon = step.icon;
           const status = stateFor(i, activeIndex);
@@ -42,6 +42,11 @@ export function ProgressTimeline({ steps, activeStepId, className }: ProgressTim
               >
                 {step.title}
               </span>
+              {status === "active" && step.subtitle ? (
+                <span className="text-center text-small text-muted-foreground">
+                  {step.subtitle}
+                </span>
+              ) : null}
             </li>
           );
         })}
@@ -114,4 +119,13 @@ function Marker({ status, children }: { status: StepState; children: React.React
       {children}
     </span>
   );
+}
+
+export function withSubtitle(
+  steps: TimelineStep[],
+  stepId: string,
+  subtitle: string | null | undefined,
+): TimelineStep[] {
+  if (!subtitle) return steps;
+  return steps.map((s) => (s.id === stepId ? { ...s, subtitle } : s));
 }

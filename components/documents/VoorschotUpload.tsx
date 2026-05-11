@@ -27,6 +27,9 @@ export function VoorschotUpload({
     try {
       const fd = new FormData();
       fd.set("file", file);
+      // Voorschot/PoA flow: no per-row fileDocumentId; use the request id as
+      // the discriminator so the API can find/replace the previous version.
+      fd.set("fileDocumentId", requestId);
       await apiFetch(`/api/requests/${requestId}/documents`, {
         method: "POST",
         body: fd,

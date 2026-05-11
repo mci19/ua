@@ -9,7 +9,7 @@ import {
   listDocumentsForRequest,
   listRequiredDocuments,
 } from "@/lib/dataverse/queries";
-import { REQUEST_STATUS } from "@/lib/constants/statuses";
+import { isEditable } from "@/lib/constants/statuses";
 import { routes } from "@/lib/constants/routes";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export default async function DocumentsPage({
     listDocumentsForRequest(auth, id).catch(() => []),
   ]);
 
-  const isEditable = request.ua_satusreason === REQUEST_STATUS.IN_AANMAAK;
+  const editable = isEditable(request.statuscode);
 
   return (
     <div className="space-y-6">
@@ -49,7 +49,7 @@ export default async function DocumentsPage({
             requestId={id}
             requiredDocuments={required}
             existing={existing}
-            readOnly={!isEditable}
+            readOnly={!editable}
           />
         </CardContent>
       </Card>
@@ -57,7 +57,7 @@ export default async function DocumentsPage({
         <Button asChild variant="secondary">
           <Link href={routes.requestForm(id)}>Vorige stap</Link>
         </Button>
-        {isEditable ? (
+        {editable ? (
           <SubmitRequestButton requestId={id} />
         ) : (
           <Button asChild>

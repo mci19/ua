@@ -1,6 +1,7 @@
 import { jsonOk, withApi } from "@/lib/api/withApi";
 import { requireAuthContext } from "@/lib/auth/session";
 import {
+  clearDocumentForReupload,
   findRequestFolder,
   getCurrentStudent,
   getRequest,
@@ -42,13 +43,19 @@ export const POST = withApi<{ id: string }>(async (req, ctx) => {
   const notApplicableFlag = form.get("notApplicable");
   const fileDocumentId = form.get("fileDocumentId");
 
-  if (notApplicableFlag === "true") {
-    if (typeof fileDocumentId !== "string") {
-      throw new ApiError(400, "fileDocumentId required", {
-        dutchMessage: "Het document-type ontbreekt.",
-      });
-    }
-    const created = await setDocumentNotApplicable(auth, id, fileDocumentId);
+  if (typeof fileDocumentId !== "string" || !fileDocumentId) {
+    throw new ApiError(400, "fileDocumentId required", {
+      dutchMessage: "Het document-type ontbreekt.",
+    });
+  }
+
+  if (notApplicableFlag === "true" || notApplicableFlag === "false") {
+    const created = await setDocumentNotApplicable(
+      auth,
+      id,
+      fileDocumentId,
+      notApplicableFlag === "true",
+    );
     return jsonOk(created, { status: 201 });
   }
 
@@ -67,6 +74,9 @@ export const POST = withApi<{ id: string }>(async (req, ctx) => {
     });
   }
 
+  // Wipe previous document row for this filedoc so re-upload replaces.
+  await clearDocumentForReupload(auth, id, fileDocumentId);
+
   const graphToken = await exchangeForGraphToken(auth.oid, auth.userAssertion);
   const graph = createGraphClient(graphToken);
 
@@ -77,7 +87,6 @@ export const POST = withApi<{ id: string }>(async (req, ctx) => {
     "",
   );
 
-  // Try Dataverse-registered SP folder first, then fall back to convention.
   const location = await findRequestFolder(auth, id);
   let folderPath: string;
   if (location?.relativeurl) {
@@ -114,7 +123,7 @@ async function assertOwnership(
   const request = await getRequest(auth, requestId);
   const student = await getCurrentStudent(auth);
   if (!student) throw new ApiError(404, "Student not found");
-  if (request._ua_student_value !== student.contactid) {
+  if (request._ua_studentid_value !== student.contactid) {
     throw new ApiError(403, "Not your request");
   }
   return request;

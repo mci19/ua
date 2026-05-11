@@ -1,35 +1,44 @@
 import { z } from "zod";
 import { ibanSchema, motivationSchema, referenceYearSchema } from "@/lib/schemas/common";
-import { DOSSIER_TYPE_ID, DOSSIER_SUBTYPE_ID } from "@/lib/constants/dossierTypes";
+import { FILE_TYPE_CODE, SOCIAL_ALLOWANCE_SCENARIOS } from "@/lib/constants/dossierTypes";
 
-export const socialAllowanceScenarioSchema = z.object({
-  fileTypeCode: z.literal(DOSSIER_TYPE_ID.SOCIALE_TOELAGE),
-  fileSubtypeCode: z.enum([
-    DOSSIER_SUBTYPE_ID.STUDIETOELAGE_TOEGEKEND,
-    DOSSIER_SUBTYPE_ID.STUDIETOELAGE_NIET_ONTVANGEN,
-    DOSSIER_SUBTYPE_ID.LEEFLOON,
-    DOSSIER_SUBTYPE_ID.VERMOEDE_VAN_TEKORT,
+const bicSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, "Geef een geldige BIC op (8 of 11 tekens).")
+  .optional()
+  .or(z.literal(""));
+
+const socialAllowanceSchema = z.object({
+  fileTypeCode: z.enum([
+    SOCIAL_ALLOWANCE_SCENARIOS[0],
+    SOCIAL_ALLOWANCE_SCENARIOS[1],
+    SOCIAL_ALLOWANCE_SCENARIOS[2],
+    SOCIAL_ALLOWANCE_SCENARIOS[3],
   ]),
   iban: ibanSchema,
+  bic: bicSchema,
   isAlleenstaand: z.boolean().default(false),
   motivation: motivationSchema,
   referenceYear: referenceYearSchema,
 });
 
-export const advanceSchema = z.object({
-  fileTypeCode: z.literal(DOSSIER_TYPE_ID.VOORSCHOT_STUDIETOELAGE),
+const advanceSchema = z.object({
+  fileTypeCode: z.literal(FILE_TYPE_CODE.VOORSCHOT_STUDIETOELAGE),
   iban: ibanSchema,
+  bic: bicSchema,
   motivation: motivationSchema.optional(),
   referenceYear: referenceYearSchema,
 });
 
-export const powerOfAttorneySchema = z.object({
-  fileTypeCode: z.literal(DOSSIER_TYPE_ID.VERLENEN_VAN_VOLMACHT),
+const powerOfAttorneySchema = z.object({
+  fileTypeCode: z.literal(FILE_TYPE_CODE.VERLENEN_VAN_VOLMACHT),
   motivation: motivationSchema.optional(),
 });
 
-export const createRequestSchema = z.discriminatedUnion("fileTypeCode", [
-  socialAllowanceScenarioSchema,
+export const createRequestSchema = z.union([
+  socialAllowanceSchema,
   advanceSchema,
   powerOfAttorneySchema,
 ]);
@@ -38,7 +47,7 @@ export type CreateRequestInput = z.infer<typeof createRequestSchema>;
 
 export const updateRequestSchema = z.object({
   iban: ibanSchema.optional(),
-  bic: z.string().trim().min(8).max(11).optional(),
+  bic: bicSchema,
   motivation: motivationSchema.optional(),
   isAlleenstaand: z.boolean().optional(),
   referenceYear: referenceYearSchema.optional(),

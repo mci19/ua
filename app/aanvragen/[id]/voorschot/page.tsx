@@ -6,9 +6,9 @@ import { VoorschotUpload } from "@/components/documents/VoorschotUpload";
 import { SubmitRequestButton } from "@/components/wizard/SubmitRequestButton";
 import { requireAuthContext } from "@/lib/auth/session";
 import { getRequest, listDocumentsForRequest } from "@/lib/dataverse/queries";
-import { REQUEST_STATUS } from "@/lib/constants/statuses";
+import { isEditable } from "@/lib/constants/statuses";
 import { routes } from "@/lib/constants/routes";
-import { DOSSIER_TYPE_ID } from "@/lib/constants/dossierTypes";
+import { FILE_TYPE_CODE } from "@/lib/constants/dossierTypes";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +24,9 @@ export default async function VoorschotPage({
     listDocumentsForRequest(auth, id).catch(() => []),
   ]);
   const code = request.ua_filetypeid?.ua_id;
-  const isPoA = code === DOSSIER_TYPE_ID.VERLENEN_VAN_VOLMACHT;
-  const isEditable = request.ua_satusreason === REQUEST_STATUS.IN_AANMAAK;
+  const filetypeRef = request._ua_filetypeid_value ?? code ?? "";
+  const isPoA = code === FILE_TYPE_CODE.VERLENEN_VAN_VOLMACHT;
+  const editable = isEditable(request.statuscode);
 
   return (
     <div className="space-y-6">
@@ -53,7 +54,11 @@ export default async function VoorschotPage({
               </p>
             </div>
             <Button asChild variant="secondary">
-              <Link href="/assets/templates/voorschot-overeenkomst.pdf" target="_blank">
+              <Link
+                href={`/api/dossier-types/${encodeURIComponent(filetypeRef)}/template`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Download className="h-4 w-4" aria-hidden="true" />
                 Download {isPoA ? "volmacht" : "overeenkomst"}
               </Link>
@@ -63,7 +68,7 @@ export default async function VoorschotPage({
             <p className="text-label font-semibold text-ua-navy">
               Stap 2 — Laad het ondertekende document op
             </p>
-            <VoorschotUpload requestId={id} existing={existing} readOnly={!isEditable} />
+            <VoorschotUpload requestId={id} existing={existing} readOnly={!editable} />
           </div>
         </CardContent>
       </Card>
@@ -71,7 +76,7 @@ export default async function VoorschotPage({
         <Button asChild variant="secondary">
           <Link href={routes.requestForm(id)}>Vorige stap</Link>
         </Button>
-        {isEditable ? (
+        {editable ? (
           <SubmitRequestButton requestId={id} />
         ) : (
           <Button asChild>

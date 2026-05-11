@@ -4,7 +4,6 @@ import {
   createRequest,
   findOpenRequestOfType,
   getCurrentStudent,
-  getFilesubtypeByCode,
   getFiletypeByCode,
   listMyRequests,
 } from "@/lib/dataverse/queries";
@@ -36,31 +35,17 @@ export const POST = withApi(async (req) => {
 
   const existing = await findOpenRequestOfType(auth, student.contactid, fileType.ua_filetypeid);
   if (existing) {
-    return jsonOk(
-      { existingId: existing.ua_requestid },
-      { status: 409 },
-    );
-  }
-
-  let fileSubtypeId: string | undefined;
-  if ("fileSubtypeCode" in input && input.fileSubtypeCode) {
-    const sub = await getFilesubtypeByCode(auth, input.fileSubtypeCode);
-    if (!sub) {
-      throw new ApiError(400, "Unknown subtype", {
-        dutchMessage: "Het gekozen scenario bestaat niet (meer).",
-      });
-    }
-    fileSubtypeId = sub.ua_filesubtypeid;
+    return jsonOk({ existingId: existing.ua_requestid }, { status: 409 });
   }
 
   const created = await createRequest(auth, {
     studentId: student.contactid,
     fileTypeId: fileType.ua_filetypeid,
-    fileSubtypeId,
-    iban: "iban" in input ? input.iban : undefined,
-    motivation: "motivation" in input ? input.motivation : undefined,
-    isAlleenstaand: "isAlleenstaand" in input ? input.isAlleenstaand : undefined,
-    referenceYear: "referenceYear" in input ? input.referenceYear : undefined,
+    iban: "iban" in input ? input.iban : null,
+    bic: "bic" in input && input.bic ? input.bic : null,
+    motivation: "motivation" in input ? input.motivation ?? null : null,
+    isAlleenstaand: "isAlleenstaand" in input ? input.isAlleenstaand : null,
+    referenceYear: "referenceYear" in input ? input.referenceYear : null,
   });
 
   return jsonOk(created, { status: 201 });

@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./lib/i18n/request.ts");
 
 // Netlify's Next.js runtime handles SSR/middleware on its own and is
 // incompatible with the standalone output. Keep standalone for Docker / Azure
@@ -19,4 +22,5 @@ const config: NextConfig = {
   },
 };
 
-export default config;
+export default withNextIntl(config);
+

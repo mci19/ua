@@ -33,6 +33,7 @@ export function EditRequestForm({
     resolver: zodResolver(updateRequestSchema),
     defaultValues: {
       iban: request.ua_iban ?? "",
+      bic: request.ua_bic ?? "",
       motivation: request.ua_motivation ?? undefined,
       isAlleenstaand: !!request.ua_isalleenstaand,
       referenceYear: request.ua_referenceyear ?? undefined,
@@ -67,9 +68,19 @@ export function EditRequestForm({
       >
         <Input id="referenceYear" disabled={readOnly} {...register("referenceYear")} />
       </FormField>
-      <FormField label="IBAN" htmlFor="iban" error={errors.iban?.message}>
-        <Input id="iban" disabled={readOnly} {...register("iban")} />
-      </FormField>
+      <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+        <FormField label="IBAN" htmlFor="iban" error={errors.iban?.message}>
+          <Input id="iban" disabled={readOnly} {...register("iban")} />
+        </FormField>
+        <FormField
+          label="BIC"
+          htmlFor="bic"
+          error={errors.bic?.message}
+          hint="Optioneel"
+        >
+          <Input id="bic" disabled={readOnly} {...register("bic")} />
+        </FormField>
+      </div>
       <FormField label="Burgerlijke staat" htmlFor="isAlleenstaand">
         <label className="flex items-start gap-3">
           <Checkbox

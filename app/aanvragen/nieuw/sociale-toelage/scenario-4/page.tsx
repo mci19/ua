@@ -4,7 +4,7 @@ import { PageShell } from "@/components/common/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/lib/constants/routes";
-import { DOSSIER_SUBTYPE_ID } from "@/lib/constants/dossierTypes";
+import { FILE_TYPE_CODE } from "@/lib/constants/dossierTypes";
 
 export default function ScenarioFourPage() {
   return (
@@ -28,7 +28,7 @@ export default function ScenarioFourPage() {
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg">
                 <Link
-                  href={`/aanvragen/nieuw/sociale-toelage/${DOSSIER_SUBTYPE_ID.VERMOEDE_VAN_TEKORT}`}
+                  href={`/aanvragen/nieuw/sociale-toelage/${FILE_TYPE_CODE.VERMOEDE_VAN_TEKORT}`}
                 >
                   Formulier starten
                 </Link>

@@ -11,18 +11,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/forms/FormField";
-import {
-  socialAllowanceScenarioSchema,
-  type CreateRequestInput,
-} from "@/lib/schemas/request";
+import { createRequestSchema, type CreateRequestInput } from "@/lib/schemas/request";
 import { apiFetch, type ClientApiError } from "@/lib/api/fetcher";
-import { DOSSIER_TYPE_ID, type DossierSubtypeId } from "@/lib/constants/dossierTypes";
+import { type FileTypeCode } from "@/lib/constants/dossierTypes";
 import { currentAcademicYear } from "@/lib/utils/date";
 import { routes } from "@/lib/constants/routes";
 
-type FormValues = Extract<CreateRequestInput, { fileTypeCode: typeof DOSSIER_TYPE_ID.SOCIALE_TOELAGE }>;
+type FormValues = Extract<CreateRequestInput, { fileTypeCode: FileTypeCode; iban: string }>;
 
-export function SocialAllowanceForm({ subtypeCode }: { subtypeCode: DossierSubtypeId }) {
+export function SocialAllowanceForm({ scenarioCode }: { scenarioCode: FileTypeCode }) {
   const router = useRouter();
   const {
     register,
@@ -31,13 +28,13 @@ export function SocialAllowanceForm({ subtypeCode }: { subtypeCode: DossierSubty
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(socialAllowanceScenarioSchema),
+    resolver: zodResolver(createRequestSchema),
     defaultValues: {
-      fileTypeCode: DOSSIER_TYPE_ID.SOCIALE_TOELAGE,
-      fileSubtypeCode: subtypeCode as FormValues["fileSubtypeCode"],
+      fileTypeCode: scenarioCode as FormValues["fileTypeCode"],
       referenceYear: currentAcademicYear(),
       isAlleenstaand: false,
       iban: "",
+      bic: "",
       motivation: "",
     },
   });
@@ -71,7 +68,6 @@ export function SocialAllowanceForm({ subtypeCode }: { subtypeCode: DossierSubty
       className="space-y-5"
     >
       <input type="hidden" {...register("fileTypeCode")} />
-      <input type="hidden" {...register("fileSubtypeCode")} />
       <FormField
         label="Academiejaar"
         htmlFor="referenceYear"
@@ -81,15 +77,20 @@ export function SocialAllowanceForm({ subtypeCode }: { subtypeCode: DossierSubty
       >
         <Input id="referenceYear" {...register("referenceYear")} />
       </FormField>
-      <FormField
-        label="IBAN (rekeningnummer)"
-        htmlFor="iban"
-        required
-        error={errors.iban?.message}
-        hint="Belgisch IBAN beginnend met BE"
-      >
-        <Input id="iban" placeholder="BE00 0000 0000 0000" {...register("iban")} />
-      </FormField>
+      <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+        <FormField
+          label="IBAN (rekeningnummer)"
+          htmlFor="iban"
+          required
+          error={errors.iban?.message}
+          hint="Belgisch IBAN beginnend met BE"
+        >
+          <Input id="iban" placeholder="BE00 0000 0000 0000" {...register("iban")} />
+        </FormField>
+        <FormField label="BIC" htmlFor="bic" error={errors.bic?.message} hint="Optioneel">
+          <Input id="bic" placeholder="GEBABEBB" {...register("bic")} />
+        </FormField>
+      </div>
       <FormField label="Burgerlijke staat" htmlFor="isAlleenstaand">
         <label className="flex items-start gap-3">
           <Checkbox

@@ -3,16 +3,18 @@ import { ENTITY_SETS } from "@/lib/dataverse/pluralize";
 import { exchangeForDataverseToken } from "@/lib/auth/tokens";
 import type { AuthContext } from "@/lib/auth/session";
 import type {
+  AnnotationRow,
   Comment,
+  CommentRow,
   Contact,
+  DocumentConfigurationRow,
   DocumentRow,
-  FileDocument,
-  FileSubtype,
   FileType,
   RequestRow,
+  RequiredDocument,
   SharePointDocumentLocation,
 } from "@/lib/dataverse/types";
-import { REQUEST_STATUS } from "@/lib/constants/statuses";
+import { REQUEST_STATUS_CODE } from "@/lib/constants/statuses";
 
 export async function getDataverseFor(auth: AuthContext) {
   const token = await exchangeForDataverseToken(auth.oid, auth.userAssertion);
@@ -20,20 +22,25 @@ export async function getDataverseFor(auth: AuthContext) {
 }
 
 const CONTACT_SELECT =
-  "contactid,firstname,lastname,fullname,emailaddress1,mobilephone,telephone1,birthdate,ua_studentnumber,ua_nationalregisternumber,ua_rollnumber,ua_registeredaddress,ua_domicileaddress,ua_sisarequestgranted,ua_sisarequestgrantedon";
+  "contactid,firstname,lastname,fullname,emailaddress1,ua_useremail,mobilephone,telephone1,birthdate," +
+  "address1_composite,address1_line1,address1_postalcode,address1_city,address1_country," +
+  "address2_composite,address2_line1,address2_postalcode,address2_city," +
+  "ua_studentnumber,ua_nationalregisternumber,ua_sisarequestgranted,ua_sisarequestgrantedon";
 
 const REQUEST_SELECT =
-  "ua_requestid,ua_name,ua_filenumber,createdon,modifiedon,statuscode,statecode," +
-  "ua_satusreason,ua_substatuscode," +
-  "_ua_student_value,_ua_filetypeid_value,_ua_filesubtypeid_value," +
+  "ua_requestid,ua_name,ua_filenumber,createdon,modifiedon,statuscode,statecode,ua_substatuscode," +
+  "_ua_studentid_value,_ua_filetypeid_value," +
   "ua_iban,ua_bic,ua_motivation,ua_isalleenstaand,ua_referenceyear";
 
 export async function getCurrentStudent(auth: AuthContext): Promise<Contact | null> {
   if (!auth.email) return null;
   const dv = await getDataverseFor(auth);
+  // Prefer ua_useremail (UPN) for the lookup; fall back to emailaddress1.
+  const email = escapeOData(auth.email.toLowerCase());
+  const filter = `tolower(ua_useremail) eq '${email}' or tolower(emailaddress1) eq '${email}'`;
   const rows = await dv.list<Contact>(ENTITY_SETS.contact, {
     $select: CONTACT_SELECT,
-    $filter: `emailaddress1 eq '${escapeOData(auth.email.toLowerCase())}'`,
+    $filter: filter,
     $top: 1,
   });
   return rows[0] ?? null;
@@ -54,8 +61,8 @@ export async function listMyRequests(
   const dv = await getDataverseFor(auth);
   return dv.list<RequestRow>(ENTITY_SETS.ua_request, {
     $select: REQUEST_SELECT,
-    $expand: "ua_filetypeid($select=ua_id,ua_name),ua_filesubtypeid($select=ua_id,ua_name)",
-    $filter: `_ua_student_value eq ${contactId}`,
+    $expand: "ua_filetypeid($select=ua_id,ua_name)",
+    $filter: `_ua_studentid_value eq ${contactId}`,
     $orderby: "createdon desc",
   });
 }
@@ -66,8 +73,7 @@ export async function getRequest(auth: AuthContext, requestId: string): Promise<
     $select: REQUEST_SELECT,
     $expand:
       "ua_filetypeid($select=ua_id,ua_name,ua_sharepointid)," +
-      "ua_filesubtypeid($select=ua_id,ua_name)," +
-      "ua_student($select=" +
+      "ua_studentid($select=" +
       CONTACT_SELECT +
       ")",
   });
@@ -76,12 +82,11 @@ export async function getRequest(auth: AuthContext, requestId: string): Promise<
 export interface CreateRequestInput {
   studentId: string;
   fileTypeId: string;
-  fileSubtypeId?: string;
-  iban?: string;
-  bic?: string;
-  motivation?: string;
-  isAlleenstaand?: boolean;
-  referenceYear?: string;
+  iban?: string | null;
+  bic?: string | null;
+  motivation?: string | null;
+  isAlleenstaand?: boolean | null;
+  referenceYear?: string | null;
 }
 
 export async function createRequest(
@@ -90,26 +95,22 @@ export async function createRequest(
 ): Promise<RequestRow> {
   const dv = await getDataverseFor(auth);
   const body: Record<string, unknown> = {
-    "ua_student@odata.bind": `/${ENTITY_SETS.contact}(${input.studentId})`,
+    "ua_studentid@odata.bind": `/${ENTITY_SETS.contact}(${input.studentId})`,
     "ua_filetypeid@odata.bind": `/${ENTITY_SETS.ua_filetype}(${input.fileTypeId})`,
-    ua_satusreason: REQUEST_STATUS.IN_AANMAAK,
-    ua_iban: input.iban ?? null,
-    ua_bic: input.bic ?? null,
-    ua_motivation: input.motivation ?? null,
-    ua_isalleenstaand: input.isAlleenstaand ?? null,
-    ua_referenceyear: input.referenceYear ?? null,
+    statuscode: REQUEST_STATUS_CODE.IN_AANMAAK,
   };
-  if (input.fileSubtypeId) {
-    body["ua_filesubtypeid@odata.bind"] =
-      `/${ENTITY_SETS.ua_filesubtype}(${input.fileSubtypeId})`;
-  }
+  if (input.iban !== undefined) body.ua_iban = input.iban;
+  if (input.bic !== undefined) body.ua_bic = input.bic;
+  if (input.motivation !== undefined) body.ua_motivation = input.motivation;
+  if (input.isAlleenstaand !== undefined) body.ua_isalleenstaand = input.isAlleenstaand;
+  if (input.referenceYear !== undefined) body.ua_referenceyear = input.referenceYear;
   return dv.create<RequestRow>(ENTITY_SETS.ua_request, body);
 }
 
 export async function updateRequest(
   auth: AuthContext,
   requestId: string,
-  patch: Partial<CreateRequestInput> & { status?: string },
+  patch: Partial<CreateRequestInput> & { statuscode?: number },
 ): Promise<void> {
   const dv = await getDataverseFor(auth);
   const body: Record<string, unknown> = {};
@@ -118,12 +119,12 @@ export async function updateRequest(
   if (patch.motivation !== undefined) body.ua_motivation = patch.motivation;
   if (patch.isAlleenstaand !== undefined) body.ua_isalleenstaand = patch.isAlleenstaand;
   if (patch.referenceYear !== undefined) body.ua_referenceyear = patch.referenceYear;
-  if (patch.status !== undefined) body.ua_satusreason = patch.status;
+  if (patch.statuscode !== undefined) body.statuscode = patch.statuscode;
   await dv.update(ENTITY_SETS.ua_request, requestId, body);
 }
 
 export async function submitRequest(auth: AuthContext, requestId: string): Promise<void> {
-  await updateRequest(auth, requestId, { status: REQUEST_STATUS.IN_WACHT });
+  await updateRequest(auth, requestId, { statuscode: REQUEST_STATUS_CODE.IN_WACHT });
 }
 
 export async function listFiletypes(auth: AuthContext): Promise<FileType[]> {
@@ -134,7 +135,10 @@ export async function listFiletypes(auth: AuthContext): Promise<FileType[]> {
   });
 }
 
-export async function getFiletypeByCode(auth: AuthContext, code: string): Promise<FileType | null> {
+export async function getFiletypeByCode(
+  auth: AuthContext,
+  code: string,
+): Promise<FileType | null> {
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<FileType>(ENTITY_SETS.ua_filetype, {
     $select: "ua_filetypeid,ua_name,ua_id,ua_sharepointid",
@@ -144,30 +148,30 @@ export async function getFiletypeByCode(auth: AuthContext, code: string): Promis
   return rows[0] ?? null;
 }
 
-export async function getFilesubtypeByCode(
-  auth: AuthContext,
-  code: string,
-): Promise<FileSubtype | null> {
-  const dv = await getDataverseFor(auth);
-  const rows = await dv.list<FileSubtype>(ENTITY_SETS.ua_filesubtype, {
-    $select: "ua_filesubtypeid,ua_name,ua_id,_ua_filetypeid_value",
-    $filter: `ua_id eq '${escapeOData(code)}'`,
-    $top: 1,
-  });
-  return rows[0] ?? null;
-}
-
+// Joins ua_documentconfiguration with ua_filedocument so the front-end gets,
+// for each row, the document plus the per-filetype isRequired/isApplicable flags.
 export async function listRequiredDocuments(
   auth: AuthContext,
   fileTypeId: string,
-): Promise<FileDocument[]> {
+): Promise<RequiredDocument[]> {
   const dv = await getDataverseFor(auth);
-  // Many-to-many join through ua_filetype to ua_filedocument
-  return dv.list<FileDocument>(ENTITY_SETS.ua_filedocument, {
-    $select: "ua_filedocumentid,ua_name,ua_documentcode,ua_info,ua_required",
-    $filter: `ua_filetype/any(t:t/ua_filetypeid eq ${fileTypeId})`,
-    $orderby: "ua_name asc",
-  });
+  const rows = await dv.list<DocumentConfigurationRow>(
+    ENTITY_SETS.ua_documentconfiguration,
+    {
+      $select:
+        "ua_documentconfigurationid,ua_isrequired,ua_isivt,_ua_documentid_value,_ua_dossiertypeid_value",
+      $expand: "ua_documentid($select=ua_filedocumentid,ua_name,ua_documentcode,ua_id,ua_info)",
+      $filter: `_ua_dossiertypeid_value eq ${fileTypeId}`,
+    },
+  );
+  return rows
+    .filter((r) => !!r.ua_documentid)
+    .map((r) => ({
+      configurationId: r.ua_documentconfigurationid,
+      fileDocument: r.ua_documentid!,
+      isRequired: !!r.ua_isrequired,
+      isApplicable: r.ua_isivt !== false,
+    }));
 }
 
 export async function listDocumentsForRequest(
@@ -182,12 +186,34 @@ export async function listDocumentsForRequest(
   });
 }
 
+// If a previous ua_document exists for this (request, filedocument), wipe it so
+// re-upload / re-toggle replaces instead of duplicating.
+async function deleteExistingDocumentRows(
+  auth: AuthContext,
+  requestId: string,
+  fileDocumentId: string,
+): Promise<void> {
+  const dv = await getDataverseFor(auth);
+  const existing = await dv.list<DocumentRow>(ENTITY_SETS.ua_document, {
+    $select: "ua_documentid",
+    $filter:
+      `_ua_requestid_value eq ${requestId} and ` +
+      `_ua_filedocumentid_value eq ${fileDocumentId}`,
+  });
+  await Promise.all(
+    existing.map((row) => dv.delete(ENTITY_SETS.ua_document, row.ua_documentid)),
+  );
+}
+
 export async function setDocumentNotApplicable(
   auth: AuthContext,
   requestId: string,
   fileDocumentId: string,
-): Promise<DocumentRow> {
+  notApplicable: boolean,
+): Promise<DocumentRow | null> {
   const dv = await getDataverseFor(auth);
+  await deleteExistingDocumentRows(auth, requestId, fileDocumentId);
+  if (!notApplicable) return null;
   return dv.create<DocumentRow>(ENTITY_SETS.ua_document, {
     "ua_requestid@odata.bind": `/${ENTITY_SETS.ua_request}(${requestId})`,
     "ua_filedocumentid@odata.bind": `/${ENTITY_SETS.ua_filedocument}(${fileDocumentId})`,
@@ -196,16 +222,40 @@ export async function setDocumentNotApplicable(
   });
 }
 
+export async function clearDocumentForReupload(
+  auth: AuthContext,
+  requestId: string,
+  fileDocumentId: string,
+): Promise<void> {
+  await deleteExistingDocumentRows(auth, requestId, fileDocumentId);
+}
+
+// ua_comment is an Activity entity with no custom author flag. We expand
+// createdby and infer role by comparing its email to the calling student's.
 export async function listComments(
   auth: AuthContext,
   requestId: string,
+  studentEmail: string,
 ): Promise<Comment[]> {
   const dv = await getDataverseFor(auth);
-  return dv.list<Comment>(ENTITY_SETS.ua_comment, {
+  const rows = await dv.list<CommentRow>(ENTITY_SETS.ua_comment, {
     $select:
-      "ua_commentid,ua_name,ua_comment,ua_authortype,createdon,_ua_requestid_value,_ownerid_value",
+      "activityid,ua_comment,ua_isactionrequired,createdon,_createdby_value,_ownerid_value,_ua_requestid_value",
+    $expand: "createdby($select=systemuserid,fullname,internalemailaddress)",
     $filter: `_ua_requestid_value eq ${requestId}`,
     $orderby: "createdon asc",
+  });
+  const me = studentEmail.toLowerCase();
+  return rows.map((r) => {
+    const authorEmail = r.createdby?.internalemailaddress?.toLowerCase() ?? "";
+    const role = authorEmail && authorEmail === me ? "student" : "dossierbeheerder";
+    return {
+      id: r.activityid ?? `${r._createdby_value}-${r.createdon}`,
+      text: r.ua_comment ?? "",
+      createdOn: r.createdon,
+      role,
+      authorName: r.createdby?.fullname ?? undefined,
+    };
   });
 }
 
@@ -213,13 +263,15 @@ export async function createComment(
   auth: AuthContext,
   requestId: string,
   text: string,
-): Promise<Comment> {
+): Promise<{ id?: string }> {
   const dv = await getDataverseFor(auth);
-  return dv.create<Comment>(ENTITY_SETS.ua_comment, {
+  // ownerid + createdby are filled in by Dataverse from the caller's identity.
+  const created = await dv.create<CommentRow>(ENTITY_SETS.ua_comment, {
     "ua_requestid@odata.bind": `/${ENTITY_SETS.ua_request}(${requestId})`,
     ua_comment: text,
-    ua_authortype: "student",
+    subject: text.slice(0, 200),
   });
+  return { id: created.activityid };
 }
 
 export async function findRequestFolder(
@@ -246,10 +298,26 @@ export async function findOpenRequestOfType(
 ): Promise<RequestRow | null> {
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<RequestRow>(ENTITY_SETS.ua_request, {
-    $select: "ua_requestid,ua_satusreason,_ua_filetypeid_value,_ua_student_value",
+    $select: "ua_requestid,statuscode,_ua_filetypeid_value,_ua_studentid_value",
     $filter:
-      `_ua_student_value eq ${contactId} and _ua_filetypeid_value eq ${fileTypeId} ` +
-      `and ua_satusreason eq '${REQUEST_STATUS.IN_AANMAAK}'`,
+      `_ua_studentid_value eq ${contactId} and _ua_filetypeid_value eq ${fileTypeId} ` +
+      `and statuscode eq ${REQUEST_STATUS_CODE.IN_AANMAAK}`,
+    $top: 1,
+  });
+  return rows[0] ?? null;
+}
+
+// PDF templates for advance/PoA are stored as annotations (notes) on the
+// matching ua_filetype row. Returns base64-encoded body + mimetype.
+export async function getFiletypeTemplate(
+  auth: AuthContext,
+  fileTypeId: string,
+): Promise<AnnotationRow | null> {
+  const dv = await getDataverseFor(auth);
+  const rows = await dv.list<AnnotationRow>(ENTITY_SETS.annotation, {
+    $select: "annotationid,filename,mimetype,documentbody,isdocument,_objectid_value",
+    $filter: `_objectid_value eq ${fileTypeId} and isdocument eq true`,
+    $orderby: "createdon desc",
     $top: 1,
   });
   return rows[0] ?? null;

@@ -9,14 +9,14 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/forms/FormField";
-import { powerOfAttorneySchema, type CreateRequestInput } from "@/lib/schemas/request";
-import { DOSSIER_TYPE_ID } from "@/lib/constants/dossierTypes";
+import { createRequestSchema, type CreateRequestInput } from "@/lib/schemas/request";
+import { FILE_TYPE_CODE } from "@/lib/constants/dossierTypes";
 import { apiFetch, type ClientApiError } from "@/lib/api/fetcher";
 import { routes } from "@/lib/constants/routes";
 
 type FormValues = Extract<
   CreateRequestInput,
-  { fileTypeCode: typeof DOSSIER_TYPE_ID.VERLENEN_VAN_VOLMACHT }
+  { fileTypeCode: typeof FILE_TYPE_CODE.VERLENEN_VAN_VOLMACHT }
 >;
 
 export function PowerOfAttorneyForm() {
@@ -26,9 +26,9 @@ export function PowerOfAttorneyForm() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(powerOfAttorneySchema),
+    resolver: zodResolver(createRequestSchema),
     defaultValues: {
-      fileTypeCode: DOSSIER_TYPE_ID.VERLENEN_VAN_VOLMACHT,
+      fileTypeCode: FILE_TYPE_CODE.VERLENEN_VAN_VOLMACHT,
       motivation: "",
     },
   });

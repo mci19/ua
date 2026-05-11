@@ -15,10 +15,10 @@ export const GET = withApi<{ id: string }>(async (_req, ctx) => {
   const request = await getRequest(auth, id);
   const student = await getCurrentStudent(auth);
   if (!student) throw new ApiError(404, "Student not found");
-  if (request._ua_student_value !== student.contactid) {
+  if (request._ua_studentid_value !== student.contactid) {
     throw new ApiError(403, "Not your request");
   }
-  const rows = await listComments(auth, id);
+  const rows = await listComments(auth, id, auth.email);
   return jsonOk(rows);
 });
 
@@ -28,7 +28,7 @@ export const POST = withApi<{ id: string }>(async (req, ctx) => {
   const request = await getRequest(auth, id);
   const student = await getCurrentStudent(auth);
   if (!student) throw new ApiError(404, "Student not found");
-  if (request._ua_student_value !== student.contactid) {
+  if (request._ua_studentid_value !== student.contactid) {
     throw new ApiError(403, "Not your request");
   }
   const { text } = commentSchema.parse(await req.json());

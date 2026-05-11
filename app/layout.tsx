@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
@@ -23,12 +25,16 @@ export const viewport = {
   themeColor: "#1B365F",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
   return (
-    <html lang="nl" className={openSans.variable}>
+    <html lang={locale} className={openSans.variable}>
       <body className="flex min-h-screen flex-col bg-ua-gray-ultralight font-sans text-foreground">
         <SkipLink />
-        <QueryProvider>{children}</QueryProvider>
+        <NextIntlClientProvider locale={locale} messages={messages} timeZone="Europe/Brussels">
+          <QueryProvider>{children}</QueryProvider>
+        </NextIntlClientProvider>
         <Toaster
           position="top-right"
           richColors

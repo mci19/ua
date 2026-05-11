@@ -1,5 +1,5 @@
 import { PageShell } from "@/components/common/PageShell";
-import { ProgressTimeline } from "@/components/common/ProgressTimeline";
+import { ProgressTimeline, withSubtitle } from "@/components/common/ProgressTimeline";
 import { Topbar, SignOutButton } from "@/components/common/Topbar";
 import { wizardSteps } from "@/components/wizard/steps";
 import { routes } from "@/lib/constants/routes";
@@ -29,11 +29,16 @@ export default async function WizardLayout({
   const { auth, student } = await requireStudent();
   const request = await getRequest(auth, id).catch(() => null);
   if (!request) notFound();
-  if (request._ua_student_value !== student.contactid) redirect(routes.myRequests);
+  if (request._ua_studentid_value !== student.contactid) redirect(routes.myRequests);
 
   const path = (await headers()).get("x-invoke-path") ?? "";
   const last = path.split("/").pop() ?? "formulier";
   const activeStep = PATH_TO_STEP[last] ?? "formulier";
+  const stepsWithSubtitle = withSubtitle(
+    wizardSteps,
+    "formulier",
+    request.ua_filenumber ? `Dossiernummer: ${request.ua_filenumber}` : null,
+  );
 
   return (
     <>
@@ -54,7 +59,7 @@ export default async function WizardLayout({
                 {request.ua_filetypeid?.ua_name ?? "—"}
               </p>
             </div>
-            <ProgressTimeline steps={wizardSteps} activeStepId={activeStep} />
+            <ProgressTimeline steps={stepsWithSubtitle} activeStepId={activeStep} />
           </div>
         }
       >

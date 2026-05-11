@@ -10,15 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/forms/FormField";
-import { advanceSchema, type CreateRequestInput } from "@/lib/schemas/request";
-import { DOSSIER_TYPE_ID } from "@/lib/constants/dossierTypes";
+import { createRequestSchema, type CreateRequestInput } from "@/lib/schemas/request";
+import { FILE_TYPE_CODE } from "@/lib/constants/dossierTypes";
 import { apiFetch, type ClientApiError } from "@/lib/api/fetcher";
 import { currentAcademicYear } from "@/lib/utils/date";
 import { routes } from "@/lib/constants/routes";
 
 type FormValues = Extract<
   CreateRequestInput,
-  { fileTypeCode: typeof DOSSIER_TYPE_ID.VOORSCHOT_STUDIETOELAGE }
+  { fileTypeCode: typeof FILE_TYPE_CODE.VOORSCHOT_STUDIETOELAGE }
 >;
 
 export function AdvanceForm() {
@@ -28,11 +28,12 @@ export function AdvanceForm() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(advanceSchema),
+    resolver: zodResolver(createRequestSchema),
     defaultValues: {
-      fileTypeCode: DOSSIER_TYPE_ID.VOORSCHOT_STUDIETOELAGE,
+      fileTypeCode: FILE_TYPE_CODE.VOORSCHOT_STUDIETOELAGE,
       referenceYear: currentAcademicYear(),
       iban: "",
+      bic: "",
       motivation: "",
     },
   });
@@ -69,14 +70,19 @@ export function AdvanceForm() {
       >
         <Input id="referenceYear" {...register("referenceYear")} />
       </FormField>
-      <FormField
-        label="IBAN (rekeningnummer)"
-        htmlFor="iban"
-        required
-        error={errors.iban?.message}
-      >
-        <Input id="iban" placeholder="BE00 0000 0000 0000" {...register("iban")} />
-      </FormField>
+      <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+        <FormField
+          label="IBAN (rekeningnummer)"
+          htmlFor="iban"
+          required
+          error={errors.iban?.message}
+        >
+          <Input id="iban" placeholder="BE00 0000 0000 0000" {...register("iban")} />
+        </FormField>
+        <FormField label="BIC" htmlFor="bic" error={errors.bic?.message} hint="Optioneel">
+          <Input id="bic" placeholder="GEBABEBB" {...register("bic")} />
+        </FormField>
+      </div>
       <FormField label="Korte toelichting (optioneel)" htmlFor="motivation">
         <Textarea id="motivation" rows={4} {...register("motivation")} />
       </FormField>
