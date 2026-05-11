@@ -15,6 +15,8 @@ import type {
   SharePointDocumentLocation,
 } from "@/lib/dataverse/types";
 import { REQUEST_STATUS_CODE } from "@/lib/constants/statuses";
+import { isDemoMode } from "@/lib/demo/flag";
+import * as demo from "@/lib/demo/store";
 
 export async function getDataverseFor(auth: AuthContext) {
   const token = await exchangeForDataverseToken(auth.oid, auth.userAssertion);
@@ -33,6 +35,7 @@ const REQUEST_SELECT =
   "ua_iban,ua_bic,ua_motivation,ua_isalleenstaand,ua_referenceyear";
 
 export async function getCurrentStudent(auth: AuthContext): Promise<Contact | null> {
+  if (isDemoMode) return demo.getContactByEmail(auth.email);
   if (!auth.email) return null;
   const dv = await getDataverseFor(auth);
   // Prefer ua_useremail (UPN) for the lookup; fall back to emailaddress1.
@@ -47,6 +50,10 @@ export async function getCurrentStudent(auth: AuthContext): Promise<Contact | nu
 }
 
 export async function grantSisaPermission(auth: AuthContext, contactId: string): Promise<void> {
+  if (isDemoMode) {
+    demo.grantSisa(contactId);
+    return;
+  }
   const dv = await getDataverseFor(auth);
   await dv.update(ENTITY_SETS.contact, contactId, {
     ua_sisarequestgranted: true,
@@ -58,6 +65,7 @@ export async function listMyRequests(
   auth: AuthContext,
   contactId: string,
 ): Promise<RequestRow[]> {
+  if (isDemoMode) return demo.listRequestsForStudent(contactId);
   const dv = await getDataverseFor(auth);
   return dv.list<RequestRow>(ENTITY_SETS.ua_request, {
     $select: REQUEST_SELECT,
@@ -68,6 +76,11 @@ export async function listMyRequests(
 }
 
 export async function getRequest(auth: AuthContext, requestId: string): Promise<RequestRow> {
+  if (isDemoMode) {
+    const row = demo.getRequestById(requestId);
+    if (!row) throw new Error("Request not found");
+    return row;
+  }
   const dv = await getDataverseFor(auth);
   return dv.get<RequestRow>(ENTITY_SETS.ua_request, requestId, {
     $select: REQUEST_SELECT,
@@ -93,6 +106,17 @@ export async function createRequest(
   auth: AuthContext,
   input: CreateRequestInput,
 ): Promise<RequestRow> {
+  if (isDemoMode) {
+    return demo.createDemoRequest({
+      studentId: input.studentId,
+      fileTypeId: input.fileTypeId,
+      iban: input.iban,
+      bic: input.bic,
+      motivation: input.motivation,
+      isAlleenstaand: input.isAlleenstaand,
+      referenceYear: input.referenceYear,
+    });
+  }
   const dv = await getDataverseFor(auth);
   const body: Record<string, unknown> = {
     "ua_studentid@odata.bind": `/${ENTITY_SETS.contact}(${input.studentId})`,
@@ -112,6 +136,21 @@ export async function updateRequest(
   requestId: string,
   patch: Partial<CreateRequestInput> & { statuscode?: number },
 ): Promise<void> {
+  if (isDemoMode) {
+    const cur = demo.getRequestById(requestId);
+    if (!cur) return;
+    const next: Partial<RequestRow> = {};
+    if (patch.iban !== undefined) next.ua_iban = patch.iban ?? null;
+    if (patch.bic !== undefined) next.ua_bic = patch.bic ?? null;
+    if (patch.motivation !== undefined) next.ua_motivation = patch.motivation ?? null;
+    if (patch.isAlleenstaand !== undefined)
+      next.ua_isalleenstaand = patch.isAlleenstaand ?? null;
+    if (patch.referenceYear !== undefined)
+      next.ua_referenceyear = patch.referenceYear ?? null;
+    if (patch.statuscode !== undefined) next.statuscode = patch.statuscode;
+    demo.updateDemoRequest(requestId, next);
+    return;
+  }
   const dv = await getDataverseFor(auth);
   const body: Record<string, unknown> = {};
   if (patch.iban !== undefined) body.ua_iban = patch.iban;
@@ -128,6 +167,7 @@ export async function submitRequest(auth: AuthContext, requestId: string): Promi
 }
 
 export async function listFiletypes(auth: AuthContext): Promise<FileType[]> {
+  if (isDemoMode) return demo.listFiletypes();
   const dv = await getDataverseFor(auth);
   return dv.list<FileType>(ENTITY_SETS.ua_filetype, {
     $select: "ua_filetypeid,ua_name,ua_id,ua_sharepointid",
@@ -139,6 +179,7 @@ export async function getFiletypeByCode(
   auth: AuthContext,
   code: string,
 ): Promise<FileType | null> {
+  if (isDemoMode) return demo.findFiletypeByCode(code);
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<FileType>(ENTITY_SETS.ua_filetype, {
     $select: "ua_filetypeid,ua_name,ua_id,ua_sharepointid",
@@ -154,6 +195,7 @@ export async function listRequiredDocuments(
   auth: AuthContext,
   fileTypeId: string,
 ): Promise<RequiredDocument[]> {
+  if (isDemoMode) return demo.listRequiredDocs(fileTypeId);
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<DocumentConfigurationRow>(
     ENTITY_SETS.ua_documentconfiguration,
@@ -178,6 +220,7 @@ export async function listDocumentsForRequest(
   auth: AuthContext,
   requestId: string,
 ): Promise<DocumentRow[]> {
+  if (isDemoMode) return demo.listDocs(requestId);
   const dv = await getDataverseFor(auth);
   return dv.list<DocumentRow>(ENTITY_SETS.ua_document, {
     $select:
@@ -211,6 +254,7 @@ export async function setDocumentNotApplicable(
   fileDocumentId: string,
   notApplicable: boolean,
 ): Promise<DocumentRow | null> {
+  if (isDemoMode) return demo.setNotApplicable(requestId, fileDocumentId, notApplicable);
   const dv = await getDataverseFor(auth);
   await deleteExistingDocumentRows(auth, requestId, fileDocumentId);
   if (!notApplicable) return null;
@@ -227,6 +271,10 @@ export async function clearDocumentForReupload(
   requestId: string,
   fileDocumentId: string,
 ): Promise<void> {
+  if (isDemoMode) {
+    demo.setNotApplicable(requestId, fileDocumentId, false);
+    return;
+  }
   await deleteExistingDocumentRows(auth, requestId, fileDocumentId);
 }
 
@@ -237,6 +285,7 @@ export async function listComments(
   requestId: string,
   studentEmail: string,
 ): Promise<Comment[]> {
+  if (isDemoMode) return demo.listDemoComments(requestId);
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<CommentRow>(ENTITY_SETS.ua_comment, {
     $select:
@@ -264,6 +313,10 @@ export async function createComment(
   requestId: string,
   text: string,
 ): Promise<{ id?: string }> {
+  if (isDemoMode) {
+    const c = demo.appendDemoComment(requestId, text, auth.email);
+    return { id: c.id };
+  }
   const dv = await getDataverseFor(auth);
   // ownerid + createdby are filled in by Dataverse from the caller's identity.
   const created = await dv.create<CommentRow>(ENTITY_SETS.ua_comment, {
@@ -278,6 +331,7 @@ export async function findRequestFolder(
   auth: AuthContext,
   requestId: string,
 ): Promise<SharePointDocumentLocation | null> {
+  if (isDemoMode) return null;
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<SharePointDocumentLocation>(
     ENTITY_SETS.sharepointdocumentlocation,
@@ -296,6 +350,7 @@ export async function findOpenRequestOfType(
   contactId: string,
   fileTypeId: string,
 ): Promise<RequestRow | null> {
+  if (isDemoMode) return demo.findOpenRequest(contactId, fileTypeId);
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<RequestRow>(ENTITY_SETS.ua_request, {
     $select: "ua_requestid,statuscode,_ua_filetypeid_value,_ua_studentid_value",
@@ -313,6 +368,7 @@ export async function getFiletypeTemplate(
   auth: AuthContext,
   fileTypeId: string,
 ): Promise<AnnotationRow | null> {
+  if (isDemoMode) return demo.getDemoTemplate(fileTypeId);
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<AnnotationRow>(ENTITY_SETS.annotation, {
     $select: "annotationid,filename,mimetype,documentbody,isdocument,_objectid_value",

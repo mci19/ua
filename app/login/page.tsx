@@ -2,6 +2,9 @@ import Link from "next/link";
 import { signIn } from "@/lib/auth/auth";
 import { Button } from "@/components/ui/button";
 import { UALogo } from "@/components/common/UALogo";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { isDemoMode } from "@/lib/demo/flag";
 
 export default async function LoginPage({
   searchParams,
@@ -19,7 +22,9 @@ export default async function LoginPage({
           <header className="space-y-2">
             <h1 className="text-title text-ua-navy">Welkom bij het studentenportaal</h1>
             <p className="text-body text-muted-foreground">
-              Meld je aan met je UAntwerpen-account om je aanvragen te beheren.
+              {isDemoMode
+                ? "Demo modus — log in met een testaccount."
+                : "Meld je aan met je UAntwerpen-account om je aanvragen te beheren."}
             </p>
           </header>
           {error ? (
@@ -27,28 +32,84 @@ export default async function LoginPage({
               Aanmelden mislukt. Probeer het opnieuw.
             </p>
           ) : null}
-          <form
-            action={async () => {
-              "use server";
-              await signIn("microsoft-entra-id", { redirectTo: callbackUrl ?? "/" });
-            }}
-          >
-            <Button type="submit" size="lg" className="w-full">
-              Aanmelden met Microsoft
-            </Button>
-          </form>
-          <p className="text-small text-muted-foreground">
-            Heb je hulp nodig?{" "}
-            <Link
-              href="https://www.uantwerpen.be/nl/studeren/financiele-info/"
-              className="ua-link"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Bezoek de financiële infopagina
-            </Link>
-            .
-          </p>
+
+          {isDemoMode ? (
+            <>
+              <form
+                action={async (formData: FormData) => {
+                  "use server";
+                  await signIn("demo", {
+                    username: String(formData.get("username") ?? ""),
+                    password: String(formData.get("password") ?? ""),
+                    redirectTo: callbackUrl ?? "/",
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-1.5">
+                  <Label htmlFor="username" required>Gebruikersnaam</Label>
+                  <Input
+                    id="username"
+                    name="username"
+                    autoComplete="username"
+                    placeholder="anna / tom / lara"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="password" required>Wachtwoord</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="demo"
+                    defaultValue="demo"
+                    required
+                  />
+                </div>
+                <Button type="submit" size="lg" className="w-full">
+                  Aanmelden
+                </Button>
+              </form>
+              <div className="rounded border border-ua-gray-light bg-ua-gray-ultralight p-4 text-small">
+                <p className="font-semibold text-ua-navy">Testaccounts</p>
+                <ul className="mt-2 space-y-1 text-muted-foreground">
+                  <li><span className="font-mono">anna</span> — SISA toegekend + 2 aanvragen</li>
+                  <li><span className="font-mono">tom</span> — SISA nog niet toegekend</li>
+                  <li><span className="font-mono">lara</span> — niet gekend → onboarding</li>
+                </ul>
+                <p className="mt-2 text-muted-foreground">
+                  Wachtwoord voor alle accounts: <span className="font-mono">demo</span>
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <form
+                action={async () => {
+                  "use server";
+                  await signIn("microsoft-entra-id", { redirectTo: callbackUrl ?? "/" });
+                }}
+              >
+                <Button type="submit" size="lg" className="w-full">
+                  Aanmelden met Microsoft
+                </Button>
+              </form>
+              <p className="text-small text-muted-foreground">
+                Heb je hulp nodig?{" "}
+                <Link
+                  href="https://www.uantwerpen.be/nl/studeren/financiele-info/"
+                  className="ua-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Bezoek de financiële infopagina
+                </Link>
+                .
+              </p>
+            </>
+          )}
         </div>
       </section>
     </div>

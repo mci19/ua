@@ -43,6 +43,35 @@ pnpm dev
 
 Visit http://localhost:3000.
 
+### Demo mode (no Azure required)
+
+To run the whole portal against an in-memory mock store — no Azure, no Dataverse, no
+SharePoint — set `UA_DEMO_MODE=true` and `AUTH_SECRET=anything` and that's it:
+
+```bash
+echo 'UA_DEMO_MODE=true' >> .env.local
+echo 'AUTH_SECRET=dev'  >> .env.local
+pnpm dev
+```
+
+The login page shows a username/password form with three seeded accounts (password
+is always `demo`):
+
+| User | Wachtwoord | Wat het demonstreert |
+| ---- | ---------- | --------------------- |
+| `anna` | `demo` | SISA toegekend, 2 bestaande aanvragen (1 in behandeling met "Actie vereist", 1 in aanmaak) |
+| `tom`  | `demo` | SISA nog niet toegekend → routes naar de SISA-grant pagina |
+| `lara` | `demo` | Niet gekend in Dataverse → routes naar `/onboarding/unknown` |
+
+In demo mode:
+- Uploads worden niet naar SharePoint gestuurd; ze worden alleen in memory geregistreerd.
+- De PDF-template-route serveert een gegenereerde "Hello World"-PDF.
+- Data persist binnen één serverproces; bij een redeploy/restart wordt de seed-state opnieuw geladen.
+- Er staat een gele banner bovenaan ("DEMO MODUS — data is fictief…").
+
+To deploy a demo to Netlify: set just `UA_DEMO_MODE=true` and `AUTH_SECRET` in the
+Netlify env vars, leave everything else blank, push.
+
 ### Required Microsoft Entra app permissions (delegated)
 
 - `openid`, `profile`, `email`, `offline_access`

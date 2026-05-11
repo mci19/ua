@@ -2,6 +2,7 @@ import { getToken } from "next-auth/jwt";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { ApiError } from "@/lib/utils/errors";
+import { isDemoMode } from "@/lib/demo/flag";
 
 export interface AuthContext {
   oid: string;
@@ -13,6 +14,16 @@ export interface AuthContext {
 export async function requireAuthContext(req?: Request): Promise<AuthContext> {
   const session = await auth();
   if (!session?.user) throw new ApiError(401, "Not authenticated");
+
+  if (isDemoMode) {
+    const email = session.user.email ?? "";
+    return {
+      oid: session.user.oid ?? email,
+      email,
+      name: session.user.name,
+      userAssertion: "demo",
+    };
+  }
 
   // Reconstruct a Request from incoming headers when one isn't provided
   const r = req ?? new Request("http://internal", { headers: await headers() });

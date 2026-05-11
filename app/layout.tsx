@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { SkipLink } from "@/components/common/SkipLink";
+import { DemoBanner } from "@/components/common/DemoBanner";
 
 const openSans = Open_Sans({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className={openSans.variable}>
       <body className="flex min-h-screen flex-col bg-ua-gray-ultralight font-sans text-foreground">
         <SkipLink />
+        <DemoBanner />
         <NextIntlClientProvider locale={locale} messages={messages} timeZone="Europe/Brussels">
           <QueryProvider>{children}</QueryProvider>
         </NextIntlClientProvider>

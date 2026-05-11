@@ -1,4 +1,5 @@
 import { getConfidentialClient } from "@/lib/auth/msal";
+import { isDemoMode } from "@/lib/demo/flag";
 
 interface CacheEntry {
   token: string;
@@ -16,6 +17,7 @@ async function exchangeOnBehalfOf(
   userAssertion: string,
   scopes: string[],
 ): Promise<string> {
+  if (isDemoMode) return "demo-token";
   const k = key(oid, scopes.join(" "));
   const hit = cache.get(k);
   const now = Date.now() / 1000;
@@ -42,10 +44,12 @@ function dataverseScope(): string {
 }
 
 export function exchangeForDataverseToken(oid: string, userAssertion: string) {
+  if (isDemoMode) return Promise.resolve("demo-token");
   return exchangeOnBehalfOf(oid, userAssertion, [dataverseScope()]);
 }
 
 export function exchangeForGraphToken(oid: string, userAssertion: string) {
+  if (isDemoMode) return Promise.resolve("demo-token");
   return exchangeOnBehalfOf(oid, userAssertion, [
     "https://graph.microsoft.com/Files.ReadWrite.All",
     "https://graph.microsoft.com/Sites.ReadWrite.All",

@@ -1,8 +1,12 @@
 import { ConfidentialClientApplication, LogLevel } from "@azure/msal-node";
+import { isDemoMode } from "@/lib/demo/flag";
 
 let cached: ConfidentialClientApplication | null = null;
 
 export function getConfidentialClient(): ConfidentialClientApplication {
+  if (isDemoMode) {
+    throw new Error("MSAL client is not available in demo mode");
+  }
   if (cached) return cached;
   const tenantId = required("AZURE_AD_TENANT_ID");
   const clientId = required("AZURE_AD_CLIENT_ID");

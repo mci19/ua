@@ -12,6 +12,8 @@ import { exchangeForGraphToken } from "@/lib/auth/tokens";
 import { createGraphClient } from "@/lib/graph/client";
 import { ensureFolder, uploadDocument } from "@/lib/graph/sharepoint";
 import { ApiError } from "@/lib/utils/errors";
+import { isDemoMode } from "@/lib/demo/flag";
+import { recordDemoUpload } from "@/lib/demo/store";
 
 const MAX_BYTES = 25 * 1024 * 1024;
 const ALLOWED_MIME = new Set([
@@ -74,8 +76,15 @@ export const POST = withApi<{ id: string }>(async (req, ctx) => {
     });
   }
 
-  // Wipe previous document row for this filedoc so re-upload replaces.
   await clearDocumentForReupload(auth, id, fileDocumentId);
+
+  if (isDemoMode) {
+    const recorded = recordDemoUpload(id, fileDocumentId, file.name);
+    return jsonOk(
+      { id: recorded.ua_documentid, name: file.name, size: file.size, webUrl: recorded.ua_sharepointurl ?? "" },
+      { status: 201 },
+    );
+  }
 
   const graphToken = await exchangeForGraphToken(auth.oid, auth.userAssertion);
   const graph = createGraphClient(graphToken);
