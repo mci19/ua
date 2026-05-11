@@ -1,0 +1,34 @@
+# Netlify build configuration for the UA studentenportaal.
+# The Next.js runtime is auto-detected; nothing extra needs installing.
+
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+  # Tell pnpm not to fail on missing peer deps during the Netlify build
+  NPM_FLAGS = "--prefix=/dev/null"
+  PNPM_FLAGS = "--no-frozen-lockfile"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Required server-side env vars (set the actual values in the Netlify UI):
+# - AUTH_SECRET                  (openssl rand -base64 32)
+# - NEXTAUTH_URL                 (https://<your-site>.netlify.app)
+# - AZURE_AD_TENANT_ID
+# - AZURE_AD_CLIENT_ID
+# - AZURE_AD_CLIENT_SECRET
+# - DATAVERSE_URL                (e.g. https://uantwerpen.crm4.dynamics.com)
+# - SHAREPOINT_SITE_ID
+# - SHAREPOINT_DRIVE_ID
+# - SHAREPOINT_REQUEST_FOLDER    (optional, defaults to "Aanvragen")
+# Public:
+# - NEXT_PUBLIC_APP_URL
+
+[functions]
+  # Bump default 10s -> 26s to give multipart uploads + Dataverse calls room.
+  # On Netlify Pro/Enterprise you can go higher.
+  node_bundler = "esbuild"

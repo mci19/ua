@@ -111,9 +111,31 @@ For "niet van toepassing" rows there is nothing to upload; we insert `ua_documen
 
 ## Deploying
 
-- **Vercel**: just import the repo, set env vars, done.
-- **Azure App Service / Container Apps / SWA Functions**: build the Docker image
-  (`docker build .`) and deploy. The Dockerfile uses the Next.js standalone output.
+### Netlify (primary target)
+
+1. Connect this repo in the Netlify dashboard. The `netlify.toml` already sets
+   build command (`pnpm build`), publish dir (`.next`), Node 22, and registers
+   `@netlify/plugin-nextjs` — Netlify auto-detects Next.js and uses the plugin
+   for SSR + middleware.
+2. In **Site settings → Environment variables**, add every value from
+   `.env.example`:
+   - `AUTH_SECRET`, `NEXTAUTH_URL` (your `https://<site>.netlify.app` URL)
+   - `AZURE_AD_TENANT_ID`, `AZURE_AD_CLIENT_ID`, `AZURE_AD_CLIENT_SECRET`
+   - `DATAVERSE_URL`
+   - `SHAREPOINT_SITE_ID`, `SHAREPOINT_DRIVE_ID`, `SHAREPOINT_REQUEST_FOLDER`
+   - `NEXT_PUBLIC_APP_URL`
+3. Add the Netlify URL as a redirect URI in your Entra app registration:
+   `https://<site>.netlify.app/api/auth/callback/microsoft-entra-id`.
+4. Push to the tracked branch → Netlify builds and deploys.
+
+`next.config.ts` checks `process.env.NETLIFY` and skips `output: "standalone"`
+on Netlify (standalone is only used for Docker / Azure deploys).
+
+### Other targets
+
+- **Vercel**: import the repo, set the same env vars, done.
+- **Azure App Service / Container Apps**: `docker build .` and deploy. The
+  Dockerfile uses the Next.js standalone output.
 - **On-prem / k8s**: same Docker image behind your reverse proxy.
 
 ## What's still TODO
