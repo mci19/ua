@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { Topbar, SignOutButton } from "@/components/common/Topbar";
+import { Topbar } from "@/components/common/Topbar";
+import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -33,7 +34,7 @@ export default function SocialAllowancePickerPage() {
         title="Aanvraag sociale toelage"
         showBack
         backHref={routes.newRequest}
-        rightSlot={<SignOutButton />}
+        rightSlot={<SignOutForm />}
       />
       <PageShell>
         <Stack gap="lg">

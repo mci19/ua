@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Topbar, SignOutButton } from "@/components/common/Topbar";
+import { Topbar } from "@/components/common/Topbar";
+import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ export default function ScenarioFourPage() {
         title="Sociale toelage – vermoede van tekort"
         showBack
         backHref={routes.newSocialAllowance}
-        rightSlot={<SignOutButton />}
+        rightSlot={<SignOutForm />}
       />
       <PageShell>
         <Card className="mx-auto max-w-2xl">

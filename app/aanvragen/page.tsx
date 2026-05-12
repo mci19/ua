@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FolderOpen, Plus } from "lucide-react";
-import { Topbar, SignOutButton } from "@/components/common/Topbar";
+import { Topbar } from "@/components/common/Topbar";
+import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -19,7 +20,7 @@ export default async function MyRequestsPage() {
   const rows = await listMyRequests(auth, student.contactid);
   return (
     <>
-      <Topbar title="Mijn aanvragen" showBack backHref="/" rightSlot={<SignOutButton />} />
+      <Topbar title="Mijn aanvragen" showBack backHref="/" rightSlot={<SignOutForm />} />
       <PageShell>
         <Stack gap="lg">
           <PageHeader

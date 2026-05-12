@@ -1,7 +1,11 @@
-"use client";
-
 import { Check, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+
+// Server component on purpose: it receives `steps[].icon` (a Lucide React
+// component function) as a prop, and React only allows function props to
+// cross the Server-Client boundary via `"use server"`. Since this widget
+// has no client-side state (no useState/useEffect/onClick), it's a plain
+// Server Component and we render the icons in place.
 
 export interface TimelineStep {
   id: string;

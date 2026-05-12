@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UALogo } from "@/components/common/UALogo";
 import { cn } from "@/lib/utils/cn";
@@ -67,13 +67,7 @@ export function Topbar({ title, showBack, backHref, rightSlot, className }: Topb
   );
 }
 
-export function SignOutButton() {
-  return (
-    <form action="/api/auth/signout" method="post">
-      <Button type="submit" intent="onDark" size="sm" aria-label="Afmelden">
-        <LogOut className="h-4 w-4" aria-hidden="true" />
-        <span className="hidden sm:inline">Afmelden</span>
-      </Button>
-    </form>
-  );
-}
+// SignOutButton was previously exported here as a client-side <form
+// action="/api/auth/signout">. That bypasses NextAuth's CSRF token and
+// fails with MissingCSRF in production. Use the server-action
+// SignOutForm from "@/components/common/SignOutForm" instead.

@@ -1,5 +1,6 @@
 import { Plus, FolderOpen } from "lucide-react";
-import { Topbar, SignOutButton } from "@/components/common/Topbar";
+import { Topbar } from "@/components/common/Topbar";
+import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
 import { ActionCard } from "@/components/ui/action-card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -22,7 +23,7 @@ export default async function OverviewPage() {
 
   return (
     <>
-      <Topbar title="Welkom" rightSlot={<SignOutButton />} />
+      <Topbar title="Welkom" rightSlot={<SignOutForm />} />
       <PageShell>
         <Stack gap="lg">
           <PageHeader

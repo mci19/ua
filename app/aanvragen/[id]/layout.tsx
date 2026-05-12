@@ -1,6 +1,7 @@
 import { PageShell } from "@/components/common/PageShell";
 import { ProgressTimeline, withSubtitle } from "@/components/common/ProgressTimeline";
-import { Topbar, SignOutButton } from "@/components/common/Topbar";
+import { Topbar } from "@/components/common/Topbar";
+import { SignOutForm } from "@/components/common/SignOutForm";
 import { wizardSteps } from "@/components/wizard/steps";
 import { routes } from "@/lib/constants/routes";
 import { getRequest } from "@/lib/dataverse/queries";
@@ -46,7 +47,7 @@ export default async function WizardLayout({
         title={request.ua_filenumber ?? "Aanvraag"}
         showBack
         backHref={routes.myRequests}
-        rightSlot={<SignOutButton />}
+        rightSlot={<SignOutForm />}
       />
       <PageShell
         aside={

@@ -1,4 +1,5 @@
-import { Topbar, SignOutButton } from "@/components/common/Topbar";
+import { Topbar } from "@/components/common/Topbar";
+import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { DescriptionList, type DescriptionItem } from "@/components/ui/description-list";
@@ -34,7 +35,7 @@ export default async function SisaGrantPage({
   ];
   return (
     <>
-      <Topbar title="Toestemming SISA" showBack rightSlot={<SignOutButton />} />
+      <Topbar title="Toestemming SISA" showBack rightSlot={<SignOutForm />} />
       <PageShell>
         <Card className="mx-auto max-w-2xl">
           <CardContent className="p-8">

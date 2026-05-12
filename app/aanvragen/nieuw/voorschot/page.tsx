@@ -1,4 +1,5 @@
-import { Topbar, SignOutButton } from "@/components/common/Topbar";
+import { Topbar } from "@/components/common/Topbar";
+import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProgressTimeline } from "@/components/common/ProgressTimeline";
@@ -20,7 +21,7 @@ export default async function NewAdvancePage() {
         title="Aanvraag voorschot studietoelage"
         showBack
         backHref={routes.newRequest}
-        rightSlot={<SignOutButton />}
+        rightSlot={<SignOutForm />}
       />
       <PageShell aside={<ProgressTimeline steps={wizardSteps} activeStepId="formulier" />}>
         <Stack gap="lg">

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { Topbar, SignOutButton } from "@/components/common/Topbar";
+import { Topbar } from "@/components/common/Topbar";
+import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProgressTimeline } from "@/components/common/ProgressTimeline";
@@ -35,7 +36,7 @@ export default async function NewSocialAllowanceFormPage({
         title="Nieuwe sociale toelage"
         showBack
         backHref={routes.newSocialAllowance}
-        rightSlot={<SignOutButton />}
+        rightSlot={<SignOutForm />}
       />
       <PageShell aside={<ProgressTimeline steps={wizardSteps} activeStepId="formulier" />}>
         <Stack gap="lg">

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Topbar, SignOutButton } from "@/components/common/Topbar";
+import { Topbar } from "@/components/common/Topbar";
+import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default function UnknownUserPage() {
   return (
     <>
-      <Topbar title="Account niet gevonden" rightSlot={<SignOutButton />} />
+      <Topbar title="Account niet gevonden" rightSlot={<SignOutForm />} />
       <PageShell>
         <Card className="mx-auto max-w-2xl">
           <CardContent className="p-8">

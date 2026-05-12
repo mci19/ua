@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { FileText, Banknote, FileSignature } from "lucide-react";
-import { Topbar, SignOutButton } from "@/components/common/Topbar";
+import { Topbar } from "@/components/common/Topbar";
+import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
 import { ActionCard } from "@/components/ui/action-card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -48,7 +49,7 @@ export default async function NewRequestTypePage() {
         title="Aanvraag types"
         showBack
         backHref={routes.overview}
-        rightSlot={<SignOutButton />}
+        rightSlot={<SignOutForm />}
       />
       <PageShell>
         <Stack gap="lg">
