@@ -371,8 +371,11 @@ export async function createDemoRequest(input: {
   referenceYear?: string | null;
 }): Promise<RequestRow> {
   const snap = await readSnapshot();
+  // Predictable sequential id so old bookmarks / browser history don't 404
+  // after a redeploy. Within a single cookie's lifetime, the sequence is
+  // stable.
   const seq = snap.newRequests.length + 100;
-  const id = `req-demo-${seq}-${Math.random().toString(36).slice(2, 6)}`;
+  const id = `req-demo-${seq}`;
   const row: RequestRow = {
     ua_requestid: id,
     ua_name: `Demo aanvraag ${seq}`,

@@ -7,7 +7,7 @@ import { routes } from "@/lib/constants/routes";
 import { getRequest } from "@/lib/dataverse/queries";
 import { requireStudent } from "@/lib/server/me";
 import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,10 @@ export default async function WizardLayout({
   const { id } = await params;
   const { auth, student } = await requireStudent();
   const request = await getRequest(auth, id).catch(() => null);
-  if (!request) notFound();
+  // If the request is gone (cookie expired, redeploy lost it, or wrong
+  // bookmark) we bounce back to /aanvragen rather than showing a hard 404
+  // — the dossier list is the right starting point.
+  if (!request) redirect(routes.myRequests);
   if (request._ua_studentid_value !== student.contactid) redirect(routes.myRequests);
 
   const path = (await headers()).get("x-invoke-path") ?? "";
