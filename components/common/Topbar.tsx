@@ -30,15 +30,16 @@ export function Topbar({ title, showBack, backHref, rightSlot, className }: Topb
           className="flex shrink-0 items-center"
           aria-label="Naar de startpagina"
         >
-          <UALogo wordmarkClassName="hidden sm:flex" />
+          {/* White rounded badge so the dark-navy wordmark stays readable on
+              the navy header. */}
+          <UALogo size="sm" badgeClassName="rounded bg-white px-2 py-1 sm:hidden" priority />
+          <UALogo size="md" badgeClassName="hidden rounded bg-white px-2 py-1.5 sm:inline-flex" priority />
         </Link>
         {title ? (
           <h1 className="hidden flex-1 truncate text-header sm:block">{title}</h1>
         ) : (
           <div className="flex-1" />
         )}
-        {/* On mobile (no title-in-header), put the title centered between
-            the logo and the right slot for visual balance. */}
         {title ? (
           <h1 className="flex-1 truncate text-center text-label sm:hidden">{title}</h1>
         ) : null}

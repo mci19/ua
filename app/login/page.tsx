@@ -14,10 +14,10 @@ export default async function LoginPage({
   const { callbackUrl, error } = await searchParams;
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
-      <section className="flex items-center justify-center bg-ua-navy p-10 text-white">
-        <UALogo size="xl" />
+      <section className="relative flex items-center justify-center bg-white p-10 lg:border-r-8 lg:border-ua-red">
+        <UALogo size="xl" priority />
       </section>
-      <section className="flex items-center justify-center p-10">
+      <section className="flex items-center justify-center bg-ua-gray-ultralight p-10">
         <div className="w-full max-w-md space-y-6">
           <header className="space-y-2">
             <h1 className="text-title text-ua-navy">Welkom bij het studentenportaal</h1>
