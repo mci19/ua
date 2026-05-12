@@ -24,13 +24,15 @@ const demoProvider = Credentials({
   },
 });
 
-// Ask for Dataverse + Graph scopes at sign-in so the first OBO exchange
-// succeeds without AADSTS65001 "consent required". Admin-consent in the
-// Entra portal keeps students from seeing the consent screen at all.
+// Ask for Graph scopes at sign-in so the first OBO exchange succeeds
+// without AADSTS65001 "consent required". Admin-consent in the Entra
+// portal keeps students from seeing the consent screen at all.
+//
+// Dataverse is NOT asked here: the portal accesses Dataverse as the
+// Application User (client_credentials), not on behalf of the student —
+// see lib/auth/tokens.ts for the rationale (avoids per-user Power Apps
+// Premium licence requirement).
 function entraScopes(): string {
-  const dataverseScope = process.env.DATAVERSE_URL
-    ? `${process.env.DATAVERSE_URL.replace(/\/$/, "")}/user_impersonation`
-    : null;
   return [
     "openid",
     "profile",
@@ -38,10 +40,7 @@ function entraScopes(): string {
     "offline_access",
     "https://graph.microsoft.com/Files.ReadWrite.All",
     "https://graph.microsoft.com/Sites.ReadWrite.All",
-    dataverseScope,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  ].join(" ");
 }
 
 const entraProvider = MicrosoftEntraID({

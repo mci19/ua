@@ -19,9 +19,37 @@ import { isDemoMode } from "@/lib/demo/flag";
 import * as demo from "@/lib/demo/store";
 import { ApiError } from "@/lib/utils/errors";
 
-export async function getDataverseFor(auth: AuthContext) {
-  const token = await exchangeForDataverseToken(auth.oid, auth.userAssertion);
+// Now app-only (client_credentials, Application User). The `auth` arg is
+// retained for signature stability — only the rate-limit + ownership-check
+// layers still need it — but the actual Dataverse token does NOT depend on
+// the student's identity.
+export async function getDataverseFor(_auth: AuthContext) {
+  const token = await exchangeForDataverseToken("", "");
   return createDataverseClient(token);
+}
+
+// Application User's systemuser id, cached process-local after the first
+// WhoAmI call. We compare _createdby_value on comments against this id to
+// distinguish comments authored by the portal (= student) from comments
+// authored by staff in the model-driven app. Replaces the old email-based
+// heuristic that broke once Dataverse access went app-only.
+let cachedAppUserId: string | null = null;
+async function getAppUserSystemUserId(): Promise<string | null> {
+  if (isDemoMode) return null;
+  if (cachedAppUserId) return cachedAppUserId;
+  try {
+    const token = await exchangeForDataverseToken("", "");
+    const base = (process.env.DATAVERSE_URL ?? "").replace(/\/$/, "");
+    const res = await fetch(`${base}/api/data/v9.2/WhoAmI`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { UserId?: string };
+    cachedAppUserId = body.UserId ?? null;
+    return cachedAppUserId;
+  } catch {
+    return null;
+  }
 }
 
 const CONTACT_SELECT =
@@ -316,26 +344,24 @@ export async function clearDocumentForReupload(
   await deleteExistingDocumentRows(auth, requestId, fileDocumentId);
 }
 
-// ua_comment is an Activity entity with no custom author flag. We expand
-// createdby and infer role by comparing its email to the calling student's.
-//
-// A3 — UNRESOLVED with UA (deferred): in a delegated-OBO setup every
-// student-side write runs as the student's identity, so createdby == student
-// for student-authored comments. However, if a future deployment switches to
-// Application-User (S2S) writes, *every* comment becomes
-// createdby=AppUser and this email-equality check collapses. The agreed
-// solution is one of (a) a boolean `ua_authoredbystaff` on ua_comment, or
-// (c) a custom `ua_authorcontactid` lookup. Both schema-side changes are
-// owned by UA; this code is forward-compatible with either choice as long
-// as the role-inference happens server-side here.
+// Role-detection (A3 resolved without schema change):
+// All comments authored via this portal are written by the Application
+// User (S2S). Staff write comments via the model-driven app under their
+// own systemuser identity. So `_createdby_value == AppUser.systemuserid`
+// ⇒ a student-authored comment; anything else ⇒ staff/dossierbeheerder.
+// `studentEmail` is no longer used for role inference but is kept in the
+// signature for callers who pass it; remove next major.
 export async function listComments(
   auth: AuthContext,
   requestId: string,
-  studentEmail: string,
+  _studentEmail: string,
 ): Promise<Comment[]> {
   if (isDemoMode) return demo.listDemoComments(requestId);
   assertGuid(requestId, "requestId");
-  const dv = await getDataverseFor(auth);
+  const [dv, appUserId] = await Promise.all([
+    getDataverseFor(auth),
+    getAppUserSystemUserId(),
+  ]);
   const rows = await dv.list<CommentRow>(ENTITY_SETS.ua_comment, {
     $select:
       "activityid,ua_comment,ua_isactionrequired,createdon,_createdby_value,_ownerid_value,_ua_requestid_value",
@@ -343,10 +369,9 @@ export async function listComments(
     $filter: `_ua_requestid_value eq ${requestId}`,
     $orderby: "createdon asc",
   });
-  const me = studentEmail.toLowerCase();
   return rows.map((r) => {
-    const authorEmail = r.createdby?.internalemailaddress?.toLowerCase() ?? "";
-    const role = authorEmail && authorEmail === me ? "student" : "dossierbeheerder";
+    const role: Comment["role"] =
+      appUserId && r._createdby_value === appUserId ? "student" : "dossierbeheerder";
     return {
       id: r.activityid ?? `${r._createdby_value}-${r.createdon}`,
       text: r.ua_comment ?? "",

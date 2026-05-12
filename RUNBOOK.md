@@ -8,17 +8,26 @@ lossen of te bypassen.
 
 1. **Entra-app registration** klaar:
    - Redirect URI: `https://<host>/api/auth/callback/microsoft-entra-id`
-   - API-permissies (delegated):
+   - **API-permissies (delegated)** — voor Graph/SharePoint, namens de student:
      - `openid`, `profile`, `email`, `offline_access`
-     - `Dataverse user_impersonation`
      - Graph `Files.ReadWrite.All`, `Sites.ReadWrite.All`
+   - **API-permissies (application)** — voor Dataverse, namens de portal-app:
+     - `Dynamics CRM user_impersonation` → admin consent vereist
    - Tenant-admin heeft consent gegeven voor alle bovenstaande scopes.
-2. **Dataverse**:
-   - Application User aanwezig met `Studentenportaal` / `Basic User` rol
-     én custom rol met read/write op `ua_request`, `ua_comment`,
-     `ua_document`, `ua_documentconfiguration`, en read op `contact`,
-     `ua_filetype`, `ua_filedocument`, `sharepointdocumentlocation`.
+2. **Dataverse — licentievrij voor studenten**:
+   - De portal benadert Dataverse als **Application User** (S2S,
+     `client_credentials`). Studenten hebben hierdoor géén Power Apps
+     Premium-licentie nodig — een M365-licentie volstaat.
+   - Application User aangemaakt in Dataverse → gekoppeld aan de
+     Entra-app (via Application ID).
+   - Application User heeft een security-rol met read/write op
+     `ua_request`, `ua_comment`, `ua_document`, `ua_documentconfiguration`,
+     en read op `contact`, `ua_filetype`, `ua_filedocument`,
+     `sharepointdocumentlocation`, `annotation`.
    - Solution `ua_base` + `ua_logic` geïmporteerd en gepubliceerd.
+   - Autorisatie ("mag deze student deze aanvraag zien?") wordt in
+     onze app-code afgedwongen (`assertOwnership` in elke API-route),
+     niet in Dataverse — omdat alle calls als de App User binnenkomen.
 3. **SharePoint**:
    - Document library "Aanvragen" beschikbaar; folders worden lazy
      aangemaakt per aanvraag door `Aanvraag-SyncDVtoSP` flow.
@@ -83,16 +92,30 @@ demo-modus draaien).
 
 ### 4.2. OBO-exchange faalt (AADSTS65001 / 401)
 
-- Symptoom: API geeft 401 of 500 met "Je sessie is verlopen…".
-- Oorzaak: tenant-admin heeft een nieuwe scope toegevoegd zonder consent,
-  óf de student-account hoort niet bij UA-tenant.
+- Treft enkel het **Graph-pad** (SharePoint-uploads) — Dataverse loopt
+  via App-User en kent geen OBO meer.
+- Symptoom: upload-API geeft 401 of 500 met "Je sessie is verlopen…".
+- Oorzaak: tenant-admin heeft een nieuwe Graph-scope toegevoegd zonder
+  consent, óf de student-account hoort niet bij UA-tenant.
 - Stappen:
-  1. Verifieer dat alle Entra-scopes (zie sectie 1) admin-consent
-     hebben gehad. `Get-MgServicePrincipal` of het Entra-portaal toont
-     de status per scope.
+  1. Verifieer dat alle Graph-scopes (zie sectie 1) admin-consent
+     hebben gehad.
   2. Bij tenant-mismatch error: gebruiker hoort waarschijnlijk niet bij
      UA-tenant. Tenant-binding check in `auth.config.ts` weigert dat
      opzettelijk.
+
+### 4.2b. Dataverse app-only token faalt
+
+- Symptoom: alle API-routes geven 500 met "De portal kan momenteel niet
+  bij de databank.".
+- Oorzaak: client-secret verlopen, Application User uitgeschakeld in
+  Dataverse, óf admin-consent op `Dynamics CRM user_impersonation`
+  ingetrokken.
+- Stappen:
+  1. Check `/api/health?deep=1` → `downstream.dataverse.ok`.
+  2. Vernieuw `AZURE_AD_CLIENT_SECRET` in Entra-portaal én Netlify.
+  3. Verifieer de Application User-koppeling in Dataverse (Settings →
+     Users → Application Users).
 
 ### 4.3. Rate-limit triggers (HTTP 429)
 
@@ -137,12 +160,19 @@ demo-modus draaien).
   Voor incidenten tijdelijk naar 1.0 zetten via Netlify env-vars en
   redeploy.
 
-## 6. Bekende restricties / volgende-iteratie-werk
+## 6. Licentiemodel
 
-- **Comment author-detectie** in een delegated-OBO setup is correct
-  zolang de student-portal en staff-portal *niet* tegelijk via
-  Application-User schrijven. Beslissing met UA gevraagd (zie A3-comment
-  in `lib/dataverse/queries.ts::listComments`).
+- **Studenten**: M365 A3/A5 academisch. **Geen** Power Apps Premium nodig.
+- **App User** in Dataverse: één service-principal, telt niet als
+  per-user-licentie.
+- **Staff (model-driven app)**: bestaande Dynamics 365 licentie.
+
+Dit werkt zo omdat de portal Dataverse benadert als de App User (S2S),
+nooit met een student-token. Graph (SharePoint) loopt wel delegated; de
+benodigde Files/Sites scopes zitten al in M365.
+
+## 7. Bekende restricties / volgende-iteratie-werk
+
 - **OData paging** is aan voor `listMyRequests` (volgt `@odata.nextLink`
   tot max 20 pages). Andere lijsten zijn `$top`-begrensd.
 - **CSP** mag binnenkort `unsafe-inline` verliezen via een nonce-
@@ -150,3 +180,5 @@ demo-modus draaien).
 - **`force-dynamic`** staat op alle session-gated pagina's. Dat is
   correct (anders zou Next.js sessie-data prerenderen) — niet
   verschuiven zonder de auth-boundary mee te verschuiven.
+- **Managed Identity** op Azure zou `AZURE_AD_CLIENT_SECRET` overbodig
+  maken; bij eventuele migratie naar Azure Container Apps wegwerken.

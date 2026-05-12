@@ -48,6 +48,8 @@ async function clientCredsToken(scope: string): Promise<string | null> {
 async function pingDataverse(): Promise<DeepCheck["dataverse"]> {
   const url = process.env.DATAVERSE_URL;
   if (!url) return { ok: false, status: 0 };
+  // Same App-User token path the rest of the portal uses; if /api/health
+  // says Dataverse is OK then real traffic will work too.
   const token = await clientCredsToken(`${url.replace(/\/$/, "")}/.default`);
   if (!token) return { ok: false, status: 0 };
   const start = Date.now();

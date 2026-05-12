@@ -13,19 +13,31 @@ keep running on Power Automate untouched.
 - Tailwind CSS + Radix primitives (custom shadcn-style components)
 - TanStack Query, React Hook Form, Zod
 - Auth.js (NextAuth v5) with Microsoft Entra ID provider
-- MSAL Node OBO flow to mint Dataverse + Graph tokens server-side
+- MSAL Node — app-only `client_credentials` for Dataverse + OBO for Graph
 - `@microsoft/microsoft-graph-client` for SharePoint uploads
 - `sonner` for toasts, `lucide-react` for icons
 
 ## Architecture
 
 ```
-Browser ──(MSAL/NextAuth session cookie)──> Next.js
-                                            ├── /api/* route handlers
-                                            │     └─ OBO exchange ──> Dataverse Web API
-                                            │     └─ OBO exchange ──> MS Graph (SharePoint)
-                                            └─ RSC pages ─ same path
+Browser ──(NextAuth session cookie)──> Next.js
+                                       ├── /api/* route handlers
+                                       │     ├─ client_credentials ──> Dataverse Web API
+                                       │     │                          (Application User)
+                                       │     └─ OBO ───────────────────> MS Graph (SharePoint)
+                                       │                                  (delegated, as student)
+                                       └─ RSC pages ─ same path
 ```
+
+**Why app-only for Dataverse?** Microsoft's licensing rules require any user
+whose identity is forwarded to Dataverse (via OBO/delegated) to hold a Power
+Apps Premium licence. Students only carry M365 A3/A5. Authenticating to
+Dataverse as the portal's Application User sidesteps that requirement
+without losing security: the portal still verifies the session-cookie's
+identity and enforces "this student can only see their own dossiers" in our
+API-route code (`assertOwnership`). Graph stays delegated so SharePoint
+audit-trails still show the student as the uploader — those Graph scopes
+are already part of M365.
 
 Power Automate continues to:
 - Sync Dataverse ↔ SharePoint
@@ -72,11 +84,23 @@ In demo mode:
 To deploy a demo to Netlify: set just `UA_DEMO_MODE=true` and `AUTH_SECRET` in the
 Netlify env vars, leave everything else blank, push.
 
-### Required Microsoft Entra app permissions (delegated)
+### Required Microsoft Entra app permissions
+
+**Delegated** (for the student's session + Graph/SharePoint uploads):
 
 - `openid`, `profile`, `email`, `offline_access`
-- `<DATAVERSE_URL>/user_impersonation`
 - Microsoft Graph: `Files.ReadWrite.All`, `Sites.ReadWrite.All`
+
+**Application** (for app-only Dataverse access — sidesteps per-user Power
+Apps licence):
+
+- Dynamics CRM: `user_impersonation` (admin-consent required)
+
+Then in Dataverse: create an **Application User** linked to this Entra app's
+Application ID and assign a security role with read/write on `ua_request`,
+`ua_comment`, `ua_document`, `ua_documentconfiguration`, and read on
+`contact`, `ua_filetype`, `ua_filedocument`, `sharepointdocumentlocation`,
+`annotation`.
 
 Add the Next.js redirect URI: `<NEXTAUTH_URL>/api/auth/callback/microsoft-entra-id`.
 
