@@ -8,6 +8,8 @@ import { routes } from "@/lib/constants/routes";
 import { requireStudent } from "@/lib/server/me";
 import { listMyRequests } from "@/lib/dataverse/queries";
 
+export const dynamic = "force-dynamic";
+
 export default async function OverviewPage() {
   const { auth, student } = await requireStudent();
   const requests = await listMyRequests(auth, student.contactid);

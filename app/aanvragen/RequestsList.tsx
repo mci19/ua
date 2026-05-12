@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AlertTriangle, ChevronRight } from "lucide-react";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { Button } from "@/components/ui/button";
 import { Stack } from "@/components/ui/stack";
 import { Text } from "@/components/ui/text";
 import { Heading } from "@/components/ui/heading";
@@ -138,12 +139,12 @@ function RequestRowItem({ row }: { row: RequestRow }) {
       </Td>
       <Td className="text-right">
         {isViewable(row) ? (
-          <Link
-            href={targetHref(row)}
-            className="inline-flex items-center gap-1 text-ua-navy hover:underline"
-          >
-            Bekijken <ChevronRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          <Button asChild intent="primary" size="sm">
+            <Link href={targetHref(row)}>
+              Bekijken
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
         ) : (
           <Text as="span" size="small" tone="muted">
             In wachtrij

@@ -64,12 +64,12 @@ export function VoorschotUpload({
       {!readOnly ? (
         <label
           className={cn(
-            "flex cursor-pointer items-center gap-3 rounded border border-dashed border-ua-navy bg-ua-navy/5 p-4 text-ua-navy hover:bg-ua-navy/10",
+            "flex cursor-pointer items-center gap-3 rounded bg-ua-navy p-4 text-white hover:bg-ua-navy-600",
             uploading && "pointer-events-none opacity-60",
           )}
         >
           <Upload className="h-5 w-5" aria-hidden="true" />
-          <Text size="label">
+          <Text size="label" tone="white">
             {uploading ? "Bezig met opladen…" : "Klik om een PDF op te laden"}
           </Text>
           <input
