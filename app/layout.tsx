@@ -15,9 +15,9 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "UA Studentenportaal",
+  title: "UA Aanvraag toelagen",
   description: "Vraag een sociale toelage of voorschot aan bij de Universiteit Antwerpen.",
-  applicationName: "UA Studentenportaal",
+  applicationName: "UA Aanvraag toelagen",
 };
 
 export const viewport = {

@@ -20,7 +20,7 @@ export default async function LoginPage({
       <section className="flex items-center justify-center bg-ua-gray-ultralight p-10">
         <div className="w-full max-w-md space-y-6">
           <header className="space-y-2">
-            <h1 className="text-title text-ua-navy">Welkom bij het studentenportaal</h1>
+            <h1 className="text-title text-ua-navy">Welkom bij Aanvraag toelagen</h1>
             <p className="text-body text-muted-foreground">
               {isDemoMode
                 ? "Demo modus — log in met een testaccount."
