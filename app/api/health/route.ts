@@ -5,8 +5,31 @@ import { isDemoMode } from "@/lib/demo/flag";
 // it is. Visit /api/health from the browser.
 export const dynamic = "force-dynamic";
 
+function parseUrl(raw?: string) {
+  if (!raw) return { set: false };
+  try {
+    const url = new URL(raw);
+    return {
+      set: true,
+      value: url.toString().replace(/\/$/, ""),
+      ok: true,
+      protocol: url.protocol,
+    };
+  } catch {
+    return {
+      set: true,
+      value: raw,
+      ok: false,
+      error:
+        "Invalid URL — moet beginnen met https:// (bv. https://ua-poc.netlify.app).",
+    };
+  }
+}
+
 export async function GET() {
   const has = (k: string) => !!process.env[k] && process.env[k] !== "";
+  const nextauthUrl = parseUrl(process.env.NEXTAUTH_URL);
+  const authUrl = parseUrl(process.env.AUTH_URL);
   return Response.json(
     {
       ok: true,
@@ -18,7 +41,8 @@ export async function GET() {
       },
       authConfigured: {
         AUTH_SECRET: has("AUTH_SECRET"),
-        NEXTAUTH_URL: has("NEXTAUTH_URL"),
+        NEXTAUTH_URL: nextauthUrl,
+        AUTH_URL: authUrl,
       },
       azureConfigured: isDemoMode
         ? "skipped in demo mode"
