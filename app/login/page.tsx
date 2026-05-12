@@ -15,7 +15,7 @@ export default async function LoginPage({
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
       <section className="flex items-center justify-center bg-ua-navy p-10 text-white">
-        <UALogo />
+        <UALogo size="xl" />
       </section>
       <section className="flex items-center justify-center p-10">
         <div className="w-full max-w-md space-y-6">

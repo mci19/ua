@@ -24,16 +24,25 @@ export function Topbar({ title, showBack, backHref, rightSlot, className }: Topb
         className,
       )}
     >
-      <div className="container flex h-16 items-center gap-4 sm:h-20">
-        <Link href="/" className="flex items-center" aria-label="Naar de startpagina">
-          <UALogo />
+      <div className="container flex h-16 items-center gap-3 sm:h-20 sm:gap-4">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center"
+          aria-label="Naar de startpagina"
+        >
+          <UALogo wordmarkClassName="hidden sm:flex" />
         </Link>
         {title ? (
-          <h1 className="hidden flex-1 text-header sm:block">{title}</h1>
+          <h1 className="hidden flex-1 truncate text-header sm:block">{title}</h1>
         ) : (
           <div className="flex-1" />
         )}
-        <div className="flex items-center gap-2">
+        {/* On mobile (no title-in-header), put the title centered between
+            the logo and the right slot for visual balance. */}
+        {title ? (
+          <h1 className="flex-1 truncate text-center text-label sm:hidden">{title}</h1>
+        ) : null}
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {showBack ? (
             <Button
               variant="ghost"
@@ -48,11 +57,6 @@ export function Topbar({ title, showBack, backHref, rightSlot, className }: Topb
           {rightSlot}
         </div>
       </div>
-      {title ? (
-        <div className="container -mt-2 pb-3 sm:hidden">
-          <h1 className="text-header">{title}</h1>
-        </div>
-      ) : null}
     </header>
   );
 }
@@ -65,6 +69,7 @@ export function SignOutButton() {
         variant="ghost"
         size="sm"
         className="text-white hover:bg-white/10"
+        aria-label="Afmelden"
       >
         <LogOut className="h-4 w-4" aria-hidden="true" />
         <span className="hidden sm:inline">Afmelden</span>
