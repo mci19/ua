@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { FileText, Banknote, FileSignature } from "lucide-react";
+import { FileText, Banknote, FileSignature, type LucideIcon } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Topbar } from "@/components/common/Topbar";
 import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
@@ -11,34 +12,40 @@ import { requireStudent } from "@/lib/server/me";
 
 export const dynamic = "force-dynamic";
 
-const choices = [
+interface Choice {
+  href: string;
+  icon: LucideIcon;
+  titleKey: "social" | "advance" | "powerOfAttorney";
+  descKey: "socialDesc" | "advanceDesc" | "powerOfAttorneyDesc";
+  intent: "primary" | "secondary";
+}
+
+const choices: Choice[] = [
   {
     href: routes.newSocialAllowance,
     icon: Banknote,
-    title: "Aanvraag sociale toelage",
-    description:
-      "Een financiële tegemoetkoming als je tijdelijk moeilijk rondkomt en geen of een onvoldoende studietoelage ontvangt.",
-    intent: "primary" as const,
+    titleKey: "social",
+    descKey: "socialDesc",
+    intent: "primary",
   },
   {
     href: "/aanvragen/nieuw/voorschot",
     icon: FileText,
-    title: "Aanvraag voorschot studietoelage",
-    description:
-      "Vraag een voorschot aan in afwachting van je goedgekeurde studietoelage van de Vlaamse overheid.",
-    intent: "primary" as const,
+    titleKey: "advance",
+    descKey: "advanceDesc",
+    intent: "primary",
   },
   {
     href: "/aanvragen/nieuw/volmacht",
     icon: FileSignature,
-    title: "Verlenen van volmacht",
-    description:
-      "Geef iemand toestemming om je studentenadministratie in jouw plaats op te volgen.",
-    intent: "secondary" as const,
+    titleKey: "powerOfAttorney",
+    descKey: "powerOfAttorneyDesc",
+    intent: "secondary",
   },
 ];
 
 export default async function NewRequestTypePage() {
+  const t = await getTranslations("requestType");
   const { student } = await requireStudent();
   if (!student.ua_sisarequestgranted) {
     redirect(`${routes.sisaGrant}?returnTo=${encodeURIComponent(routes.newRequest)}`);
@@ -46,7 +53,7 @@ export default async function NewRequestTypePage() {
   return (
     <>
       <Topbar
-        title="Aanvraag types"
+        title={t("topbarTitle")}
         showBack
         backHref={routes.overview}
         rightSlot={<SignOutForm />}
@@ -54,19 +61,19 @@ export default async function NewRequestTypePage() {
       <PageShell>
         <Stack gap="lg">
           <PageHeader
-            eyebrow="Stap 1 van 4"
-            title="Maak een keuze"
-            description="Kies de aanvraag die het beste aansluit bij jouw situatie."
+            eyebrow={t("eyebrow")}
+            title={t("title")}
+            description={t("description")}
           />
           <div className="grid gap-4 md:grid-cols-3">
-            {choices.map(({ href, icon, title, description, intent }) => (
+            {choices.map(({ href, icon, titleKey, descKey, intent }) => (
               <ActionCard
                 key={href}
                 href={href}
                 icon={icon}
                 intent={intent}
-                title={title}
-                description={description}
+                title={t(titleKey)}
+                description={t(descKey)}
               />
             ))}
           </div>

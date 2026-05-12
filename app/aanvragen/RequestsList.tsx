@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AlertTriangle, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Stack } from "@/components/ui/stack";
@@ -49,6 +50,7 @@ function MobileList({ rows }: { rows: RequestRow[] }) {
 }
 
 function RequestCard({ row }: { row: RequestRow }) {
+  const t = useTranslations("myRequests");
   const viewable = isViewable(row);
   return (
     <div className="rounded-lg border border-ua-gray-light/70 bg-white p-4 shadow-sm">
@@ -66,7 +68,7 @@ function RequestCard({ row }: { row: RequestRow }) {
               {row.ua_filetypeid?.ua_name ?? "—"}
             </Text>
             <Text size="small" tone="muted" className="mt-2">
-              Aangemaakt {formatDate(row.createdon)}
+              {t("createdAt", { date: formatDate(row.createdon) })}
             </Text>
           </Stack>
           <StatusBadge status={row.statuscode} />
@@ -74,20 +76,20 @@ function RequestCard({ row }: { row: RequestRow }) {
         {isActionRequired(row.ua_substatuscode) ? (
           <Text size="small" tone="red" className="inline-flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-            Actie vereist
+            {t("actionRequired")}
           </Text>
         ) : null}
         <div className="flex justify-end pt-1">
           {viewable ? (
             <Button asChild intent="primary" size="sm">
               <Link href={targetHref(row)}>
-                Bekijken
+                {t("view")}
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
           ) : (
             <Text as="span" size="small" tone="muted">
-              In wachtrij
+              {t("waiting")}
             </Text>
           )}
         </div>
@@ -97,16 +99,17 @@ function RequestCard({ row }: { row: RequestRow }) {
 }
 
 function DesktopTable({ rows }: { rows: RequestRow[] }) {
+  const t = useTranslations("myRequests");
   return (
     <div className="hidden overflow-hidden rounded-lg border border-ua-gray-light/70 bg-white md:block">
       <table className="w-full text-left text-label">
         <thead className="bg-ua-navy text-white">
           <tr>
-            <Th>Dossiernummer</Th>
-            <Th>Type</Th>
-            <Th>Aangemaakt</Th>
-            <Th>Status</Th>
-            <Th className="text-right">Actie</Th>
+            <Th>{t("filenumber")}</Th>
+            <Th>{t("type")}</Th>
+            <Th>{t("createdOn")}</Th>
+            <Th>{t("status")}</Th>
+            <Th className="text-right">{t("action")}</Th>
           </tr>
         </thead>
         <tbody>
@@ -120,6 +123,7 @@ function DesktopTable({ rows }: { rows: RequestRow[] }) {
 }
 
 function RequestRowItem({ row }: { row: RequestRow }) {
+  const t = useTranslations("myRequests");
   return (
     <tr className="border-t border-ua-gray-light/70">
       <Td>
@@ -138,10 +142,10 @@ function RequestRowItem({ row }: { row: RequestRow }) {
               size="small"
               tone="red"
               className="inline-flex items-center gap-1"
-              title="Actie vereist"
+              title={t("actionRequired")}
             >
               <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-              Actie vereist
+              {t("actionRequired")}
             </Text>
           ) : null}
         </div>
@@ -150,13 +154,13 @@ function RequestRowItem({ row }: { row: RequestRow }) {
         {isViewable(row) ? (
           <Button asChild intent="primary" size="sm">
             <Link href={targetHref(row)}>
-              Bekijken
+              {t("view")}
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
         ) : (
           <Text as="span" size="small" tone="muted">
-            In wachtrij
+            {t("waiting")}
           </Text>
         )}
       </Td>

@@ -1,4 +1,5 @@
 import { Plus, FolderOpen } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Topbar } from "@/components/common/Topbar";
 import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
@@ -12,39 +13,36 @@ import { listMyRequests } from "@/lib/dataverse/queries";
 export const dynamic = "force-dynamic";
 
 export default async function OverviewPage() {
+  const t = await getTranslations("overview");
   const { auth, student } = await requireStudent();
   const requests = await listMyRequests(auth, student.contactid);
   const greeting = student.firstname ?? student.fullname ?? "student";
   const sisaPath = student.ua_sisarequestgranted ? routes.newRequest : routes.sisaGrant;
-  const requestCountLabel =
-    requests.length === 0
-      ? "Je hebt nog geen aanvragen ingediend."
-      : `Je hebt ${requests.length} aanvra${requests.length === 1 ? "ag" : "gen"}.`;
 
   return (
     <>
-      <Topbar title="Welkom" rightSlot={<SignOutForm />} />
+      <Topbar title={t("topbarTitle")} rightSlot={<SignOutForm />} />
       <PageShell>
         <Stack gap="lg">
           <PageHeader
-            eyebrow="Universiteit Antwerpen"
-            title={`Hallo ${greeting},`}
-            description="Beheer je aanvragen voor financiële ondersteuning. Start een nieuwe aanvraag of bekijk de status van je lopende dossiers."
+            eyebrow={t("eyebrow")}
+            title={t("greeting", { name: greeting })}
+            description={t("intro")}
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <ActionCard
               href={sisaPath}
               icon={Plus}
               intent="primary"
-              title="Aanvraag starten"
-              description="Vraag een sociale toelage, voorschot of volmacht aan."
+              title={t("startTitle")}
+              description={t("startDesc")}
             />
             <ActionCard
               href={routes.myRequests}
               icon={FolderOpen}
               intent="secondary"
-              title="Mijn aanvragen"
-              description={requestCountLabel}
+              title={t("myRequestsTitle")}
+              description={t("myRequestsCount", { count: requests.length })}
             />
           </div>
         </Stack>

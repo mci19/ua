@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Topbar } from "@/components/common/Topbar";
 import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
@@ -10,25 +11,20 @@ import { Text } from "@/components/ui/text";
 
 export const dynamic = "force-dynamic";
 
-export default function UnknownUserPage() {
+export default async function UnknownUserPage() {
+  const t = await getTranslations("unknownUser");
   return (
     <>
-      <Topbar title="Account niet gevonden" rightSlot={<SignOutForm />} />
+      <Topbar title={t("topbarTitle")} rightSlot={<SignOutForm />} />
       <PageShell>
         <Card className="mx-auto max-w-2xl">
           <CardContent className="p-8">
             <Stack gap="lg">
-              <Heading level="title">
-                Welkom! We kunnen je account nog niet vinden.
-              </Heading>
-              <Text tone="muted">
-                Om aan de slag te gaan moeten we eerst je studentengegevens ophalen uit
-                ons systeem. Klik op de knop hieronder en geef hiervoor eenmalig
-                toestemming. Daarna kun je direct aanvragen indienen.
-              </Text>
+              <Heading level="title">{t("title")}</Heading>
+              <Text tone="muted">{t("description")}</Text>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button asChild intent="subtle" size="lg">
-                  <Link href="/">Terug</Link>
+                  <Link href="/">{t("back")}</Link>
                 </Button>
                 <Button asChild intent="primary" size="lg">
                   <Link
@@ -36,7 +32,7 @@ export default function UnknownUserPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Navigeer naar SISA
+                    {t("goToSisa")}
                   </Link>
                 </Button>
               </div>

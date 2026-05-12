@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { UALogo } from "@/components/common/UALogo";
 import { cn } from "@/lib/utils/cn";
@@ -17,6 +18,7 @@ interface TopbarProps {
 
 export function Topbar({ title, showBack, backHref, rightSlot, className }: TopbarProps) {
   const router = useRouter();
+  const tCommon = useTranslations("common");
   return (
     <header
       className={cn(
@@ -28,7 +30,7 @@ export function Topbar({ title, showBack, backHref, rightSlot, className }: Topb
         <Link
           href="/"
           className="flex shrink-0 items-center"
-          aria-label="Naar de startpagina"
+          aria-label={tCommon("back")}
         >
           <UALogo
             size="sm"
@@ -55,7 +57,7 @@ export function Topbar({ title, showBack, backHref, rightSlot, className }: Topb
               intent="onDark"
               size="icon"
               onClick={() => (backHref ? router.push(backHref) : router.back())}
-              aria-label="Terug"
+              aria-label={tCommon("back")}
             >
               <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             </Button>

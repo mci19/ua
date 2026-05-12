@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Topbar } from "@/components/common/Topbar";
 import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
@@ -11,11 +12,12 @@ import { WizardActions } from "@/components/ui/wizard-actions";
 import { routes } from "@/lib/constants/routes";
 import { FILE_TYPE_CODE } from "@/lib/constants/dossierTypes";
 
-export default function ScenarioFourPage() {
+export default async function ScenarioFourPage() {
+  const t = await getTranslations("socialAllowance");
   return (
     <>
       <Topbar
-        title="Sociale toelage – vermoede van tekort"
+        title={t("scenarioTopbarTitle")}
         showBack
         backHref={routes.newSocialAllowance}
         rightSlot={<SignOutForm />}
@@ -24,22 +26,17 @@ export default function ScenarioFourPage() {
         <Card className="mx-auto max-w-2xl">
           <CardContent className="p-8">
             <Stack gap="md">
-              <Heading level="header">
-                Je situatie vraagt om een uitgebreidere beoordeling.
-              </Heading>
-              <Text tone="muted">
-                Vul het formulier verder in. Een dossierbeheerder zal je aanvraag
-                manueel opvolgen en je via berichten op de hoogte houden.
-              </Text>
+              <Heading level="header">{t("scenarioTitle")}</Heading>
+              <Text tone="muted">{t("scenarioDescription")}</Text>
               <WizardActions>
                 <Button asChild intent="subtle" size="lg">
-                  <Link href={routes.newSocialAllowance}>Vorige stap</Link>
+                  <Link href={routes.newSocialAllowance}>{t("scenarioPrev")}</Link>
                 </Button>
                 <Button asChild intent="primary" size="lg">
                   <Link
                     href={`/aanvragen/nieuw/sociale-toelage/${FILE_TYPE_CODE.VERMOEDE_VAN_TEKORT}`}
                   >
-                    Formulier starten
+                    {t("scenarioStart")}
                   </Link>
                 </Button>
               </WizardActions>

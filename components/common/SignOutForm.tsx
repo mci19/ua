@@ -1,11 +1,13 @@
 import { LogOut } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth/auth";
 
 // Server Component on purpose: it uses the NextAuth `signOut()` server
 // action, which manages the CSRF token internally. Hitting POST
 // /api/auth/signout from a plain <form> fails with MissingCSRF.
-export function SignOutForm() {
+export async function SignOutForm() {
+  const t = await getTranslations("auth");
   return (
     <form
       action={async () => {
@@ -13,9 +15,9 @@ export function SignOutForm() {
         await signOut({ redirectTo: "/login" });
       }}
     >
-      <Button type="submit" intent="onDark" size="sm" aria-label="Afmelden">
+      <Button type="submit" intent="onDark" size="sm" aria-label={t("signOut")}>
         <LogOut className="h-4 w-4" aria-hidden="true" />
-        <span className="hidden sm:inline">Afmelden</span>
+        <span className="hidden sm:inline">{t("signOut")}</span>
       </Button>
     </form>
   );

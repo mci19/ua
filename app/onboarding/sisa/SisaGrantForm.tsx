@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api/fetcher";
@@ -12,11 +13,13 @@ interface SisaGrantFormProps {
 }
 
 export function SisaGrantForm({ returnTo }: SisaGrantFormProps) {
+  const t = useTranslations("sisa");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const grant = useMutation({
     mutationFn: () => apiFetch<{ grantedOn: string }>("/api/me/sisa-grant", { method: "POST" }),
     onSuccess: () => {
-      toast.success("Toestemming opgeslagen.");
+      toast.success(t("grantSuccess"));
       router.push(returnTo);
       router.refresh();
     },
@@ -25,10 +28,10 @@ export function SisaGrantForm({ returnTo }: SisaGrantFormProps) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
       <Button asChild intent="subtle" size="lg">
-        <Link href="/">Annuleren</Link>
+        <Link href="/">{tCommon("cancel")}</Link>
       </Button>
       <Button onClick={() => grant.mutate()} disabled={grant.isPending} size="lg">
-        {grant.isPending ? "Bezig…" : "Toestemming verlenen"}
+        {grant.isPending ? t("granting") : t("grantButton")}
       </Button>
     </div>
   );

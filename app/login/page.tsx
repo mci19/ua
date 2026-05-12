@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { signIn } from "@/lib/auth/auth";
 import { Button } from "@/components/ui/button";
 import { UALogo } from "@/components/common/UALogo";
@@ -12,6 +13,7 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
+  const t = await getTranslations("auth");
   const { callbackUrl, error } = await searchParams;
   // Whitelist relative paths only — defeats open-redirect via
   // ?callbackUrl=https://evil.example.org
@@ -24,16 +26,17 @@ export default async function LoginPage({
       <section className="flex items-center justify-center bg-ua-gray-ultralight p-10">
         <div className="w-full max-w-md space-y-6">
           <header className="space-y-2">
-            <h1 className="text-title text-ua-navy">Welkom bij Aanvraag toelagen</h1>
+            <h1 className="text-title text-ua-navy">{t("loginTitle")}</h1>
             <p className="text-body text-muted-foreground">
-              {isDemoMode
-                ? "Demo modus — log in met een testaccount."
-                : "Meld je aan met je UAntwerpen-account om je aanvragen te beheren."}
+              {isDemoMode ? t("loginIntroDemo") : t("loginIntroProd")}
             </p>
           </header>
           {error ? (
-            <p className="rounded border border-ua-red/30 bg-ua-red/5 p-3 text-small text-ua-red">
-              Aanmelden mislukt. Probeer het opnieuw.
+            <p
+              role="alert"
+              className="rounded border border-ua-red/30 bg-ua-red/5 p-3 text-small text-ua-red"
+            >
+              {t("signInFailed")}
             </p>
           ) : null}
 
@@ -51,7 +54,9 @@ export default async function LoginPage({
                 className="space-y-4"
               >
                 <div className="space-y-1.5">
-                  <Label htmlFor="username" required>Gebruikersnaam</Label>
+                  <Label htmlFor="username" required>
+                    {t("username")}
+                  </Label>
                   <Input
                     id="username"
                     name="username"
@@ -61,7 +66,9 @@ export default async function LoginPage({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="password" required>Wachtwoord</Label>
+                  <Label htmlFor="password" required>
+                    {t("password")}
+                  </Label>
                   <Input
                     id="password"
                     name="password"
@@ -73,19 +80,17 @@ export default async function LoginPage({
                   />
                 </div>
                 <Button type="submit" size="lg" className="w-full">
-                  Aanmelden
+                  {t("demoSubmit")}
                 </Button>
               </form>
               <div className="rounded border border-ua-gray-light bg-ua-gray-ultralight p-4 text-small">
-                <p className="font-semibold text-ua-navy">Testaccounts</p>
+                <p className="font-semibold text-ua-navy">{t("demoAccountsTitle")}</p>
                 <ul className="mt-2 space-y-1 text-muted-foreground">
-                  <li><span className="font-mono">anna</span> — SISA toegekend + 2 aanvragen</li>
-                  <li><span className="font-mono">tom</span> — SISA nog niet toegekend</li>
-                  <li><span className="font-mono">lara</span> — niet gekend → onboarding</li>
+                  <li>{t("demoAccountAnna")}</li>
+                  <li>{t("demoAccountTom")}</li>
+                  <li>{t("demoAccountLara")}</li>
                 </ul>
-                <p className="mt-2 text-muted-foreground">
-                  Wachtwoord voor alle accounts: <span className="font-mono">demo</span>
-                </p>
+                <p className="mt-2 text-muted-foreground">{t("demoPasswordHint")}</p>
               </div>
             </>
           ) : (
@@ -97,18 +102,18 @@ export default async function LoginPage({
                 }}
               >
                 <Button type="submit" size="lg" className="w-full">
-                  Aanmelden met Microsoft
+                  {t("signIn")}
                 </Button>
               </form>
               <p className="text-small text-muted-foreground">
-                Heb je hulp nodig?{" "}
+                {t("helpLine")}{" "}
                 <Link
                   href="https://www.uantwerpen.be/nl/studeren/financiele-info/"
                   className="ua-link"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Bezoek de financiële infopagina
+                  {t("helpLink")}
                 </Link>
                 .
               </p>

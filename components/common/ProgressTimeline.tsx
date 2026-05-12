@@ -1,17 +1,20 @@
 import { Check, type LucideIcon } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { cn } from "@/lib/utils/cn";
 
 // Server component on purpose: it receives `steps[].icon` (a Lucide React
 // component function) as a prop, and React only allows function props to
 // cross the Server-Client boundary via `"use server"`. Since this widget
 // has no client-side state (no useState/useEffect/onClick), it's a plain
-// Server Component and we render the icons in place.
+// Server Component and we render the icons in place — and resolve the
+// translated step titles via getTranslations() here too.
 
 export interface TimelineStep {
   id: string;
-  title: string;
-  subtitle?: string;
   icon: LucideIcon;
+  // Optional override; usually we look the title up via i18n on the id.
+  title?: string;
+  subtitle?: string;
 }
 
 interface ProgressTimelineProps {
@@ -20,10 +23,38 @@ interface ProgressTimelineProps {
   className?: string;
 }
 
-export function ProgressTimeline({ steps, activeStepId, className }: ProgressTimelineProps) {
+const TITLE_KEYS: Record<string, string> = {
+  aanvraag: "wizard.stepFormulier", // start of the flow (reuse Formulier label)
+  formulier: "wizard.stepFormulier",
+  documenten: "wizard.stepDocumenten",
+  berichten: "wizard.stepBerichten",
+};
+
+async function resolveTitles(steps: TimelineStep[]): Promise<Record<string, string>> {
+  const tWizard = await getTranslations("wizard");
+  const tRequestType = await getTranslations("requestType");
+  return Object.fromEntries(
+    steps.map((s) => {
+      if (s.title) return [s.id, s.title];
+      if (s.id === "aanvraag") return [s.id, tRequestType("title")];
+      const key = TITLE_KEYS[s.id];
+      if (!key) return [s.id, s.id];
+      // tWizard expects relative key
+      return [s.id, tWizard(key.replace(/^wizard\./, "") as never)];
+    }),
+  );
+}
+
+export async function ProgressTimeline({
+  steps,
+  activeStepId,
+  className,
+}: ProgressTimelineProps) {
+  const titles = await resolveTitles(steps);
   const activeIndex = steps.findIndex((s) => s.id === activeStepId);
+  const tCommon = await getTranslations("common");
   return (
-    <nav aria-label="Stappen" className={cn("w-full", className)}>
+    <nav aria-label={tCommon("skipToContent")} className={cn("w-full", className)}>
       {/* Mobile: horizontal stepper */}
       <ol className="flex w-full items-start justify-between gap-2 lg:hidden">
         {steps.map((step, i) => {
@@ -44,7 +75,7 @@ export function ProgressTimeline({ steps, activeStepId, className }: ProgressTim
                   status === "active" ? "font-semibold text-ua-navy" : "text-muted-foreground",
                 )}
               >
-                {step.title}
+                {titles[step.id]}
               </span>
               {status === "active" && step.subtitle ? (
                 <span className="text-center text-small text-muted-foreground">
@@ -87,7 +118,7 @@ export function ProgressTimeline({ steps, activeStepId, className }: ProgressTim
                     status === "active" ? "font-semibold text-ua-navy" : "text-foreground",
                   )}
                 >
-                  {step.title}
+                  {titles[step.id]}
                 </span>
                 {step.subtitle ? (
                   <span className="text-small text-muted-foreground">{step.subtitle}</span>

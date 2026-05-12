@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FolderOpen, Plus } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Topbar } from "@/components/common/Topbar";
 import { SignOutForm } from "@/components/common/SignOutForm";
 import { PageShell } from "@/components/common/PageShell";
@@ -16,23 +17,24 @@ import { RefreshButton } from "./RefreshButton";
 export const dynamic = "force-dynamic";
 
 export default async function MyRequestsPage() {
+  const t = await getTranslations("myRequests");
   const { auth, student } = await requireStudent();
   const rows = await listMyRequests(auth, student.contactid);
   return (
     <>
-      <Topbar title="Mijn aanvragen" showBack backHref="/" rightSlot={<SignOutForm />} />
+      <Topbar title={t("topbarTitle")} showBack backHref="/" rightSlot={<SignOutForm />} />
       <PageShell>
         <Stack gap="lg">
           <PageHeader
-            eyebrow="Overzicht"
-            title="Mijn aanvragen"
-            description="Hier vind je een overzicht van al je dossiers."
+            eyebrow={t("eyebrow")}
+            title={t("title")}
+            description={t("description")}
             actions={
               <>
                 <RefreshButton />
                 <Button asChild>
                   <Link href={routes.newRequest}>
-                    <Plus className="h-4 w-4" aria-hidden="true" /> Nieuwe aanvraag
+                    <Plus className="h-4 w-4" aria-hidden="true" /> {t("newRequest")}
                   </Link>
                 </Button>
               </>
@@ -41,11 +43,11 @@ export default async function MyRequestsPage() {
           {rows.length === 0 ? (
             <EmptyState
               icon={FolderOpen}
-              title="Nog geen aanvragen"
-              description="Start een nieuwe aanvraag om hier overzicht te krijgen."
+              title={t("emptyTitle")}
+              description={t("emptyDescription")}
               action={
                 <Button asChild>
-                  <Link href={routes.newRequest}>Aanvraag starten</Link>
+                  <Link href={routes.newRequest}>{t("emptyAction")}</Link>
                 </Button>
               }
             />
