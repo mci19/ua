@@ -24,11 +24,11 @@ export function SisaGrantForm({ returnTo }: SisaGrantFormProps) {
   });
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
+      <Button asChild intent="subtle" size="lg">
+        <Link href="/">Annuleren</Link>
+      </Button>
       <Button onClick={() => grant.mutate()} disabled={grant.isPending} size="lg">
         {grant.isPending ? "Bezig…" : "Toestemming verlenen"}
-      </Button>
-      <Button asChild variant="secondary" size="lg">
-        <Link href="/">Annuleren</Link>
       </Button>
     </div>
   );

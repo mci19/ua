@@ -6,6 +6,7 @@ interface PageShellProps {
   className?: string;
 }
 
+// Centered page main with optional sticky sidebar (used by the wizard).
 export function PageShell({ children, aside, className }: PageShellProps) {
   return (
     <main

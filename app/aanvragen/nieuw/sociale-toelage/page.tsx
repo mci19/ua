@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { Topbar, SignOutButton } from "@/components/common/Topbar";
 import { PageShell } from "@/components/common/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { Stack } from "@/components/ui/stack";
+import { Text } from "@/components/ui/text";
 import {
   FILE_TYPE_CODE,
   FILE_TYPE_LABEL_NL,
@@ -35,30 +38,33 @@ export default function SocialAllowancePickerPage() {
         rightSlot={<SignOutButton />}
       />
       <PageShell>
-        <p className="mb-6 max-w-prose text-body text-muted-foreground">
-          Welke situatie omschrijft jouw aanvraag het best?
-        </p>
-        <ul className="space-y-3">
-          {scenarios.map(({ code, href }) => (
-            <li key={code}>
-              <Card className="transition hover:border-ua-navy">
-                <Link href={href} className="block focus:outline-none">
-                  <CardContent className="flex items-center justify-between gap-4 p-5">
-                    <span className="text-label text-foreground">
-                      {FILE_TYPE_LABEL_NL[code]}
-                    </span>
-                    <ChevronRight className="h-5 w-5 text-ua-navy" aria-hidden="true" />
-                  </CardContent>
-                </Link>
-              </Card>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-8">
-          <Button asChild variant="secondary">
+        <Stack gap="lg">
+          <PageHeader
+            eyebrow="Stap 1 van 4"
+            title="Aanvraag sociale toelage"
+            description="Welke situatie omschrijft jouw aanvraag het best?"
+          />
+          <Stack as="ul" gap="sm">
+            {scenarios.map(({ code, href }) => (
+              <li key={code}>
+                <Card className="transition hover:border-ua-navy">
+                  <Link
+                    href={href}
+                    className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ua-navy focus-visible:ring-offset-2 rounded-lg"
+                  >
+                    <CardContent className="flex items-center justify-between gap-4 p-5">
+                      <Text size="label">{FILE_TYPE_LABEL_NL[code]}</Text>
+                      <ChevronRight className="h-5 w-5 text-ua-navy" aria-hidden="true" />
+                    </CardContent>
+                  </Link>
+                </Card>
+              </li>
+            ))}
+          </Stack>
+          <Button asChild intent="subtle" size="md" className="self-start">
             <Link href={routes.newRequest}>Annuleren</Link>
           </Button>
-        </div>
+        </Stack>
       </PageShell>
     </>
   );

@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils/cn";
+import { Text } from "@/components/ui/text";
+import { Stack } from "@/components/ui/stack";
 
 interface FormFieldProps {
   label: string;
@@ -26,7 +27,7 @@ export function FormField({
   const descId = hint ? `${htmlFor}-hint` : undefined;
   const errId = error ? `${htmlFor}-error` : undefined;
   return (
-    <div className={cn("space-y-1.5", className)}>
+    <Stack gap="xs" className={className}>
       <Label htmlFor={htmlFor} required={required}>
         {label}
       </Label>
@@ -34,15 +35,29 @@ export function FormField({
         {children}
       </div>
       {hint ? (
-        <p id={descId} className="text-small text-muted-foreground">
+        <Text id={descId} as="span" size="small" tone="muted">
           {hint}
-        </p>
+        </Text>
       ) : null}
       {error ? (
-        <p id={errId} role="alert" className="text-small text-ua-red">
+        <Text id={errId} as="span" size="small" tone="red" role="alert">
           {error}
-        </p>
+        </Text>
       ) : null}
+    </Stack>
+  );
+}
+
+export function FormGrid({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={["grid gap-4 sm:grid-cols-[2fr_1fr]", className].filter(Boolean).join(" ")}>
+      {children}
     </div>
   );
 }

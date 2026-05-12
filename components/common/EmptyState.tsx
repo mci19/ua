@@ -1,4 +1,7 @@
 import type { LucideIcon } from "lucide-react";
+import { Heading } from "@/components/ui/heading";
+import { Stack } from "@/components/ui/stack";
+import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils/cn";
 
 interface EmptyStateProps {
@@ -11,9 +14,11 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div
+    <Stack
+      align="center"
+      gap="sm"
       className={cn(
-        "flex flex-col items-center gap-3 rounded-lg border border-dashed border-ua-gray-light bg-white p-10 text-center",
+        "rounded-lg border border-dashed border-ua-gray-light bg-white p-10 text-center",
         className,
       )}
     >
@@ -22,9 +27,13 @@ export function EmptyState({ icon: Icon, title, description, action, className }
           <Icon className="h-6 w-6" aria-hidden="true" />
         </span>
       ) : null}
-      <h2 className="text-header text-ua-navy">{title}</h2>
-      {description ? <p className="max-w-prose text-body text-muted-foreground">{description}</p> : null}
+      <Heading level="header">{title}</Heading>
+      {description ? (
+        <Text tone="muted" className="max-w-prose">
+          {description}
+        </Text>
+      ) : null}
       {action ? <div className="mt-2">{action}</div> : null}
-    </div>
+    </Stack>
   );
 }

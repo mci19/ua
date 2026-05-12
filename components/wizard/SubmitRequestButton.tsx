@@ -18,7 +18,7 @@ export function SubmitRequestButton({ requestId }: { requestId: string }) {
     onError: (err) => toast.error(err.message),
   });
   return (
-    <Button onClick={() => submit.mutate()} disabled={submit.isPending} size="lg">
+    <Button intent="primary" size="lg" onClick={() => submit.mutate()} disabled={submit.isPending}>
       {submit.isPending ? "Bezig…" : "Aanvraag indienen"}
     </Button>
   );

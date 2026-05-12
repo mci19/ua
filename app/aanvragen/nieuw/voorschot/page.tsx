@@ -5,6 +5,8 @@ import { ProgressTimeline } from "@/components/common/ProgressTimeline";
 import { wizardSteps } from "@/components/wizard/steps";
 import { StudentDetails } from "@/components/forms/StudentDetails";
 import { AdvanceForm } from "@/components/forms/AdvanceForm";
+import { PageHeader } from "@/components/ui/page-header";
+import { Stack } from "@/components/ui/stack";
 import { requireStudent } from "@/lib/server/me";
 import { routes } from "@/lib/constants/routes";
 
@@ -20,26 +22,22 @@ export default async function NewAdvancePage() {
         backHref={routes.newRequest}
         rightSlot={<SignOutButton />}
       />
-      <PageShell
-        aside={<ProgressTimeline steps={wizardSteps} activeStepId="formulier" />}
-      >
-        <div className="space-y-8">
-          <div className="space-y-2">
-            <p className="text-small uppercase tracking-wide text-muted-foreground">
-              Stap 2 van 4 · Formulier
-            </p>
-            <h2 className="text-title text-ua-navy">Voorschot studietoelage</h2>
-            <p className="text-body text-muted-foreground">
-              Vraag een voorschot aan in afwachting van je goedgekeurde studietoelage.
-            </p>
-          </div>
+      <PageShell aside={<ProgressTimeline steps={wizardSteps} activeStepId="formulier" />}>
+        <Stack gap="lg">
+          <PageHeader
+            eyebrow="Stap 2 van 4 · Formulier"
+            title="Voorschot studietoelage"
+            description="Vraag een voorschot aan in afwachting van je goedgekeurde studietoelage."
+          />
           <Card>
-            <CardContent className="space-y-6 p-6">
-              <StudentDetails student={student} />
-              <AdvanceForm />
+            <CardContent className="p-6">
+              <Stack gap="lg">
+                <StudentDetails student={student} />
+                <AdvanceForm />
+              </Stack>
             </CardContent>
           </Card>
-        </div>
+        </Stack>
       </PageShell>
     </>
   );

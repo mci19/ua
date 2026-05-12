@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, FileText, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Stack } from "@/components/ui/stack";
+import { Text } from "@/components/ui/text";
 import { apiFetch } from "@/lib/api/fetcher";
 import { formatDate } from "@/lib/utils/date";
 import { cn } from "@/lib/utils/cn";
@@ -33,9 +35,9 @@ export function DocumentChecklist({
   const applicable = requiredDocuments.filter((d) => d.isApplicable);
   if (applicable.length === 0) {
     return (
-      <p className="p-6 text-body text-muted-foreground">
+      <Text tone="muted" className="p-6">
         Voor dit dossiertype zijn geen documenten vereist.
-      </p>
+      </Text>
     );
   }
 
@@ -47,7 +49,7 @@ export function DocumentChecklist({
         );
         return (
           <li key={doc.configurationId} className="p-5">
-            <DocumentRow
+            <DocumentRowItem
               requestId={requestId}
               required={doc}
               current={match}
@@ -71,7 +73,7 @@ interface RowProps {
   onChange?: () => void;
 }
 
-function DocumentRow({ requestId, required, current, readOnly, onChange }: RowProps) {
+function DocumentRowItem({ requestId, required, current, readOnly, onChange }: RowProps) {
   const [uploading, setUploading] = useState(false);
   const isUploaded = !!current?.ua_isuploaded || !!current?.ua_sharepointurl;
   const isNotApplicable = !!current?.ua_isnotapplicable;
@@ -114,31 +116,38 @@ function DocumentRow({ requestId, required, current, readOnly, onChange }: RowPr
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-      <div className="flex-1 space-y-1">
-        <p className="text-label font-semibold text-ua-navy">
+      <Stack gap="xs" className="flex-1">
+        <Text size="label" tone="navy" weight="semibold">
           {required.isRequired ? (
             <span className="mr-1 text-ua-red" aria-hidden="true">
               *
             </span>
           ) : null}
           {required.fileDocument.ua_name}
-        </p>
+        </Text>
         {required.fileDocument.ua_info ? (
-          <p className="text-small text-muted-foreground">{required.fileDocument.ua_info}</p>
+          <Text size="small" tone="muted">
+            {required.fileDocument.ua_info}
+          </Text>
         ) : null}
         {current?.ua_filename ? (
-          <p className="inline-flex items-center gap-2 text-small text-success">
+          <Text
+            as="span"
+            size="small"
+            tone="success"
+            className="inline-flex items-center gap-2"
+          >
             <FileText className="h-4 w-4" aria-hidden="true" />
             {current.ua_filename}
             {current.ua_lastuploadon ? (
-              <span className="text-muted-foreground">
+              <Text as="span" size="small" tone="muted">
                 · {formatDate(current.ua_lastuploadon)}
-              </span>
+              </Text>
             ) : null}
-          </p>
+          </Text>
         ) : null}
-      </div>
-      <div className="flex flex-col items-end gap-2">
+      </Stack>
+      <Stack gap="xs" align="end">
         <StatusPill
           uploaded={isUploaded}
           notApplicable={isNotApplicable}
@@ -161,7 +170,7 @@ function DocumentRow({ requestId, required, current, readOnly, onChange }: RowPr
             />
           </div>
         ) : null}
-      </div>
+      </Stack>
     </div>
   );
 }
@@ -191,7 +200,11 @@ function StatusPill({
       </span>
     );
   }
-  return <span className="text-small text-muted-foreground">Optioneel</span>;
+  return (
+    <Text as="span" size="small" tone="muted">
+      Optioneel
+    </Text>
+  );
 }
 
 function FileButton({
@@ -206,8 +219,8 @@ function FileButton({
   return (
     <label
       className={cn(
-        "inline-flex h-9 cursor-pointer items-center gap-2 rounded border border-ua-navy bg-white px-3 text-small text-ua-navy hover:bg-ua-navy/5",
-        disabled && "pointer-events-none opacity-50",
+        "inline-flex h-9 cursor-pointer items-center gap-2 rounded bg-ua-navy px-3 text-small font-medium text-white hover:bg-ua-navy-600",
+        disabled && "pointer-events-none opacity-60",
       )}
     >
       <Upload className="h-4 w-4" aria-hidden="true" />

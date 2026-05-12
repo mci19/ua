@@ -5,6 +5,8 @@ import { ProgressTimeline } from "@/components/common/ProgressTimeline";
 import { wizardSteps } from "@/components/wizard/steps";
 import { StudentDetails } from "@/components/forms/StudentDetails";
 import { PowerOfAttorneyForm } from "@/components/forms/PowerOfAttorneyForm";
+import { PageHeader } from "@/components/ui/page-header";
+import { Stack } from "@/components/ui/stack";
 import { requireStudent } from "@/lib/server/me";
 import { routes } from "@/lib/constants/routes";
 
@@ -20,27 +22,22 @@ export default async function NewPowerOfAttorneyPage() {
         backHref={routes.newRequest}
         rightSlot={<SignOutButton />}
       />
-      <PageShell
-        aside={<ProgressTimeline steps={wizardSteps} activeStepId="formulier" />}
-      >
-        <div className="space-y-8">
-          <div className="space-y-2">
-            <p className="text-small uppercase tracking-wide text-muted-foreground">
-              Stap 2 van 4 · Formulier
-            </p>
-            <h2 className="text-title text-ua-navy">Volmacht verlenen</h2>
-            <p className="text-body text-muted-foreground">
-              Download het volmachtsformulier, laat het ondertekenen en laad de
-              ondertekende versie op.
-            </p>
-          </div>
+      <PageShell aside={<ProgressTimeline steps={wizardSteps} activeStepId="formulier" />}>
+        <Stack gap="lg">
+          <PageHeader
+            eyebrow="Stap 2 van 4 · Formulier"
+            title="Volmacht verlenen"
+            description="Download het volmachtsformulier, laat het ondertekenen en laad de ondertekende versie op."
+          />
           <Card>
-            <CardContent className="space-y-6 p-6">
-              <StudentDetails student={student} />
-              <PowerOfAttorneyForm />
+            <CardContent className="p-6">
+              <Stack gap="lg">
+                <StudentDetails student={student} />
+                <PowerOfAttorneyForm />
+              </Stack>
             </CardContent>
           </Card>
-        </div>
+        </Stack>
       </PageShell>
     </>
   );

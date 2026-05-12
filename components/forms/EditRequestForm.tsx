@@ -9,7 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { FormField } from "@/components/forms/FormField";
+import { Stack } from "@/components/ui/stack";
+import { Text } from "@/components/ui/text";
+import { WizardActions } from "@/components/ui/wizard-actions";
+import { FormField, FormGrid } from "@/components/forms/FormField";
 import { updateRequestSchema, type UpdateRequestInput } from "@/lib/schemas/request";
 import { apiFetch } from "@/lib/api/fetcher";
 import type { RequestRow } from "@/lib/dataverse/types";
@@ -56,68 +59,69 @@ export function EditRequestForm({
   const isAlleenstaand = watch("isAlleenstaand");
 
   return (
-    <form
-      noValidate
-      onSubmit={handleSubmit((v) => save.mutate(v))}
-      className="space-y-5"
-    >
-      <FormField
-        label="Academiejaar"
-        htmlFor="referenceYear"
-        error={errors.referenceYear?.message}
-      >
-        <Input id="referenceYear" disabled={readOnly} {...register("referenceYear")} />
-      </FormField>
-      <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
-        <FormField label="IBAN" htmlFor="iban" error={errors.iban?.message}>
-          <Input id="iban" disabled={readOnly} {...register("iban")} />
-        </FormField>
+    <form noValidate onSubmit={handleSubmit((v) => save.mutate(v))}>
+      <Stack gap="md" as="div">
         <FormField
-          label="BIC"
-          htmlFor="bic"
-          error={errors.bic?.message}
-          hint="Optioneel"
+          label="Academiejaar"
+          htmlFor="referenceYear"
+          error={errors.referenceYear?.message}
         >
-          <Input id="bic" disabled={readOnly} {...register("bic")} />
+          <Input id="referenceYear" disabled={readOnly} {...register("referenceYear")} />
         </FormField>
-      </div>
-      <FormField label="Burgerlijke staat" htmlFor="isAlleenstaand">
-        <label className="flex items-start gap-3">
-          <Checkbox
-            id="isAlleenstaand"
-            disabled={readOnly}
-            checked={!!isAlleenstaand}
-            onCheckedChange={(v) => setValue("isAlleenstaand", v === true, { shouldDirty: true })}
-          />
-          <span className="text-label">Ik ben alleenstaand.</span>
-        </label>
-      </FormField>
-      <FormField label="Motivatie" htmlFor="motivation" error={errors.motivation?.message}>
-        <Textarea
-          id="motivation"
-          rows={6}
-          disabled={readOnly}
-          {...register("motivation")}
-        />
-      </FormField>
-      {!readOnly ? (
-        <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
-          <Button
-            type="submit"
-            disabled={!isDirty || isSubmitting || save.isPending}
+        <FormGrid>
+          <FormField label="IBAN" htmlFor="iban" error={errors.iban?.message}>
+            <Input id="iban" disabled={readOnly} {...register("iban")} />
+          </FormField>
+          <FormField
+            label="BIC"
+            htmlFor="bic"
+            error={errors.bic?.message}
+            hint="Optioneel"
           >
-            {save.isPending ? "Bezig…" : "Wijzigingen opslaan"}
-          </Button>
-        </div>
-      ) : (
-        <p className="text-small text-muted-foreground">
-          Deze aanvraag is ingediend en kan niet meer worden aangepast.{" "}
-          <a href={routes.requestMessages(request.ua_requestid)} className="ua-link">
-            Open de berichten
-          </a>{" "}
-          om met de dossierbeheerder te communiceren.
-        </p>
-      )}
+            <Input id="bic" disabled={readOnly} {...register("bic")} />
+          </FormField>
+        </FormGrid>
+        <FormField label="Burgerlijke staat" htmlFor="isAlleenstaand">
+          <label className="flex items-start gap-3">
+            <Checkbox
+              id="isAlleenstaand"
+              disabled={readOnly}
+              checked={!!isAlleenstaand}
+              onCheckedChange={(v) =>
+                setValue("isAlleenstaand", v === true, { shouldDirty: true })
+              }
+            />
+            <Text size="label">Ik ben alleenstaand.</Text>
+          </label>
+        </FormField>
+        <FormField label="Motivatie" htmlFor="motivation" error={errors.motivation?.message}>
+          <Textarea
+            id="motivation"
+            rows={6}
+            disabled={readOnly}
+            {...register("motivation")}
+          />
+        </FormField>
+        {!readOnly ? (
+          <WizardActions>
+            <Button
+              type="submit"
+              intent="primary"
+              disabled={!isDirty || isSubmitting || save.isPending}
+            >
+              {save.isPending ? "Bezig…" : "Wijzigingen opslaan"}
+            </Button>
+          </WizardActions>
+        ) : (
+          <Text size="small" tone="muted">
+            Deze aanvraag is ingediend en kan niet meer worden aangepast.{" "}
+            <a href={routes.requestMessages(request.ua_requestid)} className="ua-link">
+              Open de berichten
+            </a>{" "}
+            om met de dossierbeheerder te communiceren.
+          </Text>
+        )}
+      </Stack>
     </form>
   );
 }

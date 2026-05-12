@@ -9,7 +9,9 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { FormField } from "@/components/forms/FormField";
+import { Stack } from "@/components/ui/stack";
+import { WizardActions } from "@/components/ui/wizard-actions";
+import { FormField, FormGrid } from "@/components/forms/FormField";
 import { createRequestSchema, type CreateRequestInput } from "@/lib/schemas/request";
 import { FILE_TYPE_CODE } from "@/lib/constants/dossierTypes";
 import { apiFetch, type ClientApiError } from "@/lib/api/fetcher";
@@ -56,44 +58,42 @@ export function AdvanceForm() {
   });
 
   return (
-    <form
-      noValidate
-      onSubmit={handleSubmit((v) => create.mutate(v))}
-      className="space-y-5"
-    >
-      <input type="hidden" {...register("fileTypeCode")} />
-      <FormField
-        label="Academiejaar"
-        htmlFor="referenceYear"
-        required
-        error={errors.referenceYear?.message}
-      >
-        <Input id="referenceYear" {...register("referenceYear")} />
-      </FormField>
-      <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+    <form noValidate onSubmit={handleSubmit((v) => create.mutate(v))}>
+      <Stack gap="md" as="div">
+        <input type="hidden" {...register("fileTypeCode")} />
         <FormField
-          label="IBAN (rekeningnummer)"
-          htmlFor="iban"
+          label="Academiejaar"
+          htmlFor="referenceYear"
           required
-          error={errors.iban?.message}
+          error={errors.referenceYear?.message}
         >
-          <Input id="iban" placeholder="BE00 0000 0000 0000" {...register("iban")} />
+          <Input id="referenceYear" {...register("referenceYear")} />
         </FormField>
-        <FormField label="BIC" htmlFor="bic" error={errors.bic?.message} hint="Optioneel">
-          <Input id="bic" placeholder="GEBABEBB" {...register("bic")} />
+        <FormGrid>
+          <FormField
+            label="IBAN (rekeningnummer)"
+            htmlFor="iban"
+            required
+            error={errors.iban?.message}
+          >
+            <Input id="iban" placeholder="BE00 0000 0000 0000" {...register("iban")} />
+          </FormField>
+          <FormField label="BIC" htmlFor="bic" error={errors.bic?.message} hint="Optioneel">
+            <Input id="bic" placeholder="GEBABEBB" {...register("bic")} />
+          </FormField>
+        </FormGrid>
+        <FormField label="Korte toelichting (optioneel)" htmlFor="motivation">
+          <Textarea id="motivation" rows={4} {...register("motivation")} />
         </FormField>
-      </div>
-      <FormField label="Korte toelichting (optioneel)" htmlFor="motivation">
-        <Textarea id="motivation" rows={4} {...register("motivation")} />
-      </FormField>
-      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
-        <Button asChild type="button" variant="secondary">
-          <Link href={routes.newRequest}>Annuleren</Link>
-        </Button>
-        <Button type="submit" disabled={isSubmitting || create.isPending}>
-          {create.isPending ? "Bezig…" : "Opslaan en doorgaan"}
-        </Button>
-      </div>
+        <WizardActions>
+          <Button asChild type="button" intent="subtle">
+            <Link href={routes.newRequest}>Annuleren</Link>
+          </Button>
+          <Button type="submit" intent="primary" disabled={isSubmitting || create.isPending}>
+            {create.isPending ? "Bezig…" : "Opslaan en doorgaan"}
+          </Button>
+        </WizardActions>
+      </Stack>
     </form>
   );
 }

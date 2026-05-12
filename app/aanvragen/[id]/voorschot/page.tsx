@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Heading } from "@/components/ui/heading";
+import { PageHeader } from "@/components/ui/page-header";
+import { Stack } from "@/components/ui/stack";
+import { Text } from "@/components/ui/text";
+import { WizardActions } from "@/components/ui/wizard-actions";
 import { VoorschotUpload } from "@/components/documents/VoorschotUpload";
 import { SubmitRequestButton } from "@/components/wizard/SubmitRequestButton";
 import { requireAuthContext } from "@/lib/auth/session";
@@ -27,63 +32,55 @@ export default async function VoorschotPage({
   const filetypeRef = request._ua_filetypeid_value ?? code ?? "";
   const isPoA = code === FILE_TYPE_CODE.VERLENEN_VAN_VOLMACHT;
   const editable = isEditable(request.statuscode);
+  const docLabel = isPoA ? "volmacht" : "overeenkomst";
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <p className="text-small uppercase tracking-wide text-muted-foreground">
-          Stap 3 van 4 · Document
-        </p>
-        <h2 className="text-title text-ua-navy">
-          {isPoA ? "Volmachtsdocument" : "Voorschotsovereenkomst"}
-        </h2>
-        <p className="text-body text-muted-foreground">
-          Download {isPoA ? "het volmachtsformulier" : "de overeenkomst"}, laat het
-          ondertekenen en laad daarna de ondertekende versie op.
-        </p>
-      </div>
+    <Stack gap="lg">
+      <PageHeader
+        eyebrow="Stap 3 van 4 · Document"
+        title={isPoA ? "Volmachtsdocument" : "Voorschotsovereenkomst"}
+        description={`Download ${
+          isPoA ? "het volmachtsformulier" : "de overeenkomst"
+        }, laat het ondertekenen en laad daarna de ondertekende versie op.`}
+      />
       <Card>
-        <CardContent className="space-y-6 p-6">
-          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-label font-semibold text-ua-navy">
-                Stap 1 — Download {isPoA ? "volmacht" : "overeenkomst"}
-              </p>
-              <p className="text-small text-muted-foreground">
+        <CardContent className="p-6">
+          <Stack gap="lg">
+            <Stack gap="sm">
+              <Heading level="subheader">Stap 1 — Download {docLabel}</Heading>
+              <Text size="small" tone="muted">
                 Open het PDF-document, vul het in en onderteken het.
-              </p>
-            </div>
-            <Button asChild variant="secondary">
-              <Link
-                href={`/api/dossier-types/${encodeURIComponent(filetypeRef)}/template`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Download className="h-4 w-4" aria-hidden="true" />
-                Download {isPoA ? "volmacht" : "overeenkomst"}
-              </Link>
-            </Button>
-          </div>
-          <div className="space-y-2 border-t border-ua-gray-light pt-6">
-            <p className="text-label font-semibold text-ua-navy">
-              Stap 2 — Laad het ondertekende document op
-            </p>
-            <VoorschotUpload requestId={id} existing={existing} readOnly={!editable} />
-          </div>
+              </Text>
+              <Button asChild intent="primary" className="self-start">
+                <Link
+                  href={`/api/dossier-types/${encodeURIComponent(filetypeRef)}/template`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                  Download {docLabel}
+                </Link>
+              </Button>
+            </Stack>
+            <Stack gap="sm" className="border-t border-ua-gray-light pt-6">
+              <Heading level="subheader">Stap 2 — Laad het ondertekende document op</Heading>
+              <VoorschotUpload requestId={id} existing={existing} readOnly={!editable} />
+            </Stack>
+          </Stack>
         </CardContent>
       </Card>
-      <div className="flex flex-col items-stretch justify-end gap-3 sm:flex-row">
-        <Button asChild variant="secondary">
+      <WizardActions>
+        <Button asChild intent="subtle">
           <Link href={routes.requestForm(id)}>Vorige stap</Link>
         </Button>
         {editable ? (
           <SubmitRequestButton requestId={id} />
         ) : (
-          <Button asChild>
+          <Button asChild intent="primary">
             <Link href={routes.requestMessages(id)}>Naar berichten</Link>
           </Button>
         )}
-      </div>
-    </div>
+      </WizardActions>
+    </Stack>
   );
 }

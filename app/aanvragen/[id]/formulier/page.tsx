@@ -3,6 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StudentDetails } from "@/components/forms/StudentDetails";
 import { EditRequestForm } from "@/components/forms/EditRequestForm";
+import { PageHeader } from "@/components/ui/page-header";
+import { Stack } from "@/components/ui/stack";
+import { WizardActions } from "@/components/ui/wizard-actions";
 import { requireStudent } from "@/lib/server/me";
 import { getRequest } from "@/lib/dataverse/queries";
 import { isEditable } from "@/lib/constants/statuses";
@@ -20,24 +23,24 @@ export default async function RequestFormPage({
   const request = await getRequest(auth, id);
   const editable = isEditable(request.statuscode);
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <p className="text-small uppercase tracking-wide text-muted-foreground">
-          Stap 2 van 4 · Formulier
-        </p>
-        <h2 className="text-title text-ua-navy">{request.ua_filetypeid?.ua_name ?? "Aanvraag"}</h2>
-      </div>
+    <Stack gap="lg">
+      <PageHeader
+        eyebrow="Stap 2 van 4 · Formulier"
+        title={request.ua_filetypeid?.ua_name ?? "Aanvraag"}
+      />
       <Card>
-        <CardContent className="space-y-6 p-6">
-          <StudentDetails student={student} />
-          <EditRequestForm request={request} readOnly={!editable} />
+        <CardContent className="p-6">
+          <Stack gap="lg">
+            <StudentDetails student={student} />
+            <EditRequestForm request={request} readOnly={!editable} />
+          </Stack>
         </CardContent>
       </Card>
-      <div className="flex justify-end">
-        <Button asChild variant="secondary">
+      <WizardActions>
+        <Button asChild intent="primary">
           <Link href={routes.requestDocuments(id)}>Volgende stap</Link>
         </Button>
-      </div>
-    </div>
+      </WizardActions>
+    </Stack>
   );
 }

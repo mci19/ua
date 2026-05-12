@@ -30,10 +30,16 @@ export function Topbar({ title, showBack, backHref, rightSlot, className }: Topb
           className="flex shrink-0 items-center"
           aria-label="Naar de startpagina"
         >
-          {/* White rounded badge so the dark-navy wordmark stays readable on
-              the navy header. */}
-          <UALogo size="sm" badgeClassName="rounded bg-white px-2 py-1 sm:hidden" priority />
-          <UALogo size="md" badgeClassName="hidden rounded bg-white px-2 py-1.5 sm:inline-flex" priority />
+          <UALogo
+            size="sm"
+            badgeClassName="rounded bg-white px-2 py-1 sm:hidden"
+            priority
+          />
+          <UALogo
+            size="md"
+            badgeClassName="hidden rounded bg-white px-2 py-1.5 sm:inline-flex"
+            priority
+          />
         </Link>
         {title ? (
           <h1 className="hidden flex-1 truncate text-header sm:block">{title}</h1>
@@ -46,9 +52,8 @@ export function Topbar({ title, showBack, backHref, rightSlot, className }: Topb
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {showBack ? (
             <Button
-              variant="ghost"
+              intent="onDark"
               size="icon"
-              className="rounded-full bg-white/10 text-white hover:bg-white/20"
               onClick={() => (backHref ? router.push(backHref) : router.back())}
               aria-label="Terug"
             >
@@ -65,13 +70,7 @@ export function Topbar({ title, showBack, backHref, rightSlot, className }: Topb
 export function SignOutButton() {
   return (
     <form action="/api/auth/signout" method="post">
-      <Button
-        type="submit"
-        variant="ghost"
-        size="sm"
-        className="text-white hover:bg-white/10"
-        aria-label="Afmelden"
-      >
+      <Button type="submit" intent="onDark" size="sm" aria-label="Afmelden">
         <LogOut className="h-4 w-4" aria-hidden="true" />
         <span className="hidden sm:inline">Afmelden</span>
       </Button>
