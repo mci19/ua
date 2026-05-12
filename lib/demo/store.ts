@@ -9,6 +9,7 @@ import type {
   RequestRow,
   RequiredDocument,
 } from "@/lib/dataverse/types";
+import { mutateSnapshot, readSnapshot } from "@/lib/demo/snapshot";
 
 // ----- Demo accounts -----
 
@@ -46,7 +47,7 @@ export const DEMO_USERS: Record<string, DemoUser> = {
   },
 };
 
-// ----- File types catalog (immutable) -----
+// ----- Immutable seed (lives in module scope, regenerated per cold start) -----
 
 const FILETYPES: FileType[] = [
   {
@@ -161,39 +162,12 @@ const REQUIRED_DOCS: Record<string, RequiredDocument[]> = {
   ],
 };
 
-// Minimal valid PDF (Hello World, ~700 bytes) used as the template body.
 const DEMO_PDF_BASE64 =
   "JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwKL0xlbmd0aCAzIDAgUgovRmlsdGVyIC9GbGF0ZURlY29kZQo+PgpzdHJlYW0KeJwzMjVTKEpJVMjJSlfQM1QwMjBQ0DEwUjA0MTBSMDQyMzAyMzMxMzAzMzlOyU4tA0qFKaQUKWQUgRSGm6ulAJUaWuhgIgFlMzGwAyJlBwBfMRMRCmVuZHN0cmVhbQplbmRvYmoKMyAwIG9iagoxMTUKZW5kb2JqCjEgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL01lZGlhQm94IFswIDAgMjAwIDcwXQovUmVzb3VyY2VzCjw8Ci9Gb250Cjw8Ci9GMSA0IDAgUgo+Pgo+PgovQ29udGVudHMgMiAwIFIKL1BhcmVudCA1IDAgUgo+PgplbmRvYmoKNCAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9IZWx2ZXRpY2EKPj4KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9Db3VudCAxCi9LaWRzIFsxIDAgUl0KPj4KZW5kb2JqCjYgMCBvYmoKPDwKL1R5cGUgL0NhdGFsb2cKL1BhZ2VzIDUgMCBSCj4+CmVuZG9iagp4cmVmCjAgNwowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAyMjMgMDAwMDAgbiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMjA0IDAwMDAwIG4gCjAwMDAwMDAzMzAgMDAwMDAgbiAKMDAwMDAwMDQwOSAwMDAwMCBuIAowMDAwMDAwNDU5IDAwMDAwIG4gCnRyYWlsZXIKPDwKL1NpemUgNwovUm9vdCA2IDAgUgo+PgpzdGFydHhyZWYKNTA4CiUlRU9G";
 
-// ----- Mutable state (lives on globalThis so it survives HMR + reuses
-//       across module-loads within a single serverless instance) -----
-
-interface DemoState {
-  contacts: Map<string, Contact>;
-  requests: Map<string, RequestRow>;
-  comments: Map<string, Comment[]>;
-  documents: Map<string, DocumentRow[]>;
-  requestSeq: number;
-  commentSeq: number;
-}
-
-const GLOBAL_KEY = "__ua_demo_state__" as const;
-
-// Augment globalThis so TS lets us cache there.
-declare global {
-  // eslint-disable-next-line no-var
-  var __ua_demo_state__: DemoState | undefined;
-}
-
-function buildSeedState(): DemoState {
-  const filetypeOf = (id: string) => FILETYPES.find((f) => f.ua_filetypeid === id);
-  const contacts = new Map<string, Contact>();
-  const requests = new Map<string, RequestRow>();
-  const comments = new Map<string, Comment[]>();
-  const documents = new Map<string, DocumentRow[]>();
-
-  // Anna — SISA granted, 2 existing requests
-  contacts.set("00000000-0000-0000-0000-000000000001", {
+// Seed contacts (always available, mutations to SISA go into the cookie).
+const SEED_CONTACTS: Record<string, Contact> = {
+  "00000000-0000-0000-0000-000000000001": {
     contactid: "00000000-0000-0000-0000-000000000001",
     firstname: "Anna",
     lastname: "Peeters",
@@ -208,12 +182,8 @@ function buildSeedState(): DemoState {
     address2_composite: "Stadscampus, Kot 4B, 2000 Antwerpen",
     ua_sisarequestgranted: true,
     ua_sisarequestgrantedon: "2026-03-15T09:00:00Z",
-  });
-
-  // Tom — also SISA granted by default so the demo flow works without the
-  // SISA gate blocking him. The grant flow is still reachable via Lara →
-  // permission page if you want to demo it.
-  contacts.set("00000000-0000-0000-0000-000000000002", {
+  },
+  "00000000-0000-0000-0000-000000000002": {
     contactid: "00000000-0000-0000-0000-000000000002",
     firstname: "Tom",
     lastname: "Janssens",
@@ -227,9 +197,16 @@ function buildSeedState(): DemoState {
     address1_composite: "Lange Nieuwstraat 55, 2000 Antwerpen, België",
     ua_sisarequestgranted: true,
     ua_sisarequestgrantedon: "2026-04-01T08:00:00Z",
-  });
+  },
+};
 
-  const annaRequest1: RequestRow = {
+const filetypeById = (id: string | null | undefined) =>
+  FILETYPES.find((f) => f.ua_filetypeid === id);
+
+// Seed requests for Anna — always present after a cold start. User mutations
+// (creates / patches / status changes / new comments) live in the cookie.
+const SEED_REQUESTS: RequestRow[] = [
+  {
     ua_requestid: "req-anna-1",
     ua_name: "Aanvraag sociale toelage",
     ua_filenumber: "ST-2026-0001",
@@ -244,9 +221,9 @@ function buildSeedState(): DemoState {
       "Mijn ouders kunnen mijn studiekosten dit jaar niet dekken. Ik volg een voltijdse opleiding en heb een lopende studietoelage van de Vlaamse overheid ontvangen.",
     ua_referenceyear: "2025-2026",
     ua_isalleenstaand: false,
-    ua_filetypeid: filetypeOf("ft-toegekend"),
-  };
-  const annaRequest2: RequestRow = {
+    ua_filetypeid: filetypeById("ft-toegekend"),
+  },
+  {
     ua_requestid: "req-anna-2",
     ua_name: "Aanvraag voorschot",
     ua_filenumber: "VS-2026-0007",
@@ -258,12 +235,12 @@ function buildSeedState(): DemoState {
     ua_iban: "BE68 5390 0754 7034",
     ua_motivation: "",
     ua_referenceyear: "2025-2026",
-    ua_filetypeid: filetypeOf("ft-voorschot"),
-  };
-  requests.set(annaRequest1.ua_requestid, annaRequest1);
-  requests.set(annaRequest2.ua_requestid, annaRequest2);
+    ua_filetypeid: filetypeById("ft-voorschot"),
+  },
+];
 
-  comments.set("req-anna-1", [
+const SEED_COMMENTS: Record<string, Comment[]> = {
+  "req-anna-1": [
     {
       id: "c1",
       text: "Bedankt voor je aanvraag. Kun je nog je laatste loonbrief toevoegen?",
@@ -278,59 +255,75 @@ function buildSeedState(): DemoState {
       role: "student",
       authorName: "Anna Peeters",
     },
-  ]);
-  comments.set("req-anna-2", []);
-  documents.set("req-anna-1", [
-    {
-      ua_documentid: "doc-anna-1-id",
-      ua_filename: "studietoelagebeslissing.pdf",
-      ua_isuploaded: true,
-      ua_isnotapplicable: false,
-      ua_lastuploadon: "2026-04-20T08:32:00Z",
-      _ua_requestid_value: "req-anna-1",
-      _ua_filedocumentid_value: "fd-beslissing",
-    },
-  ]);
-  documents.set("req-anna-2", []);
+  ],
+};
 
-  return { contacts, requests, comments, documents, requestSeq: 100, commentSeq: 1000 };
+// Documents live in a global map — fictional and not critical to demo flow.
+const documentsState = new Map<string, DocumentRow[]>([
+  [
+    "req-anna-1",
+    [
+      {
+        ua_documentid: "doc-anna-1-id",
+        ua_filename: "studietoelagebeslissing.pdf",
+        ua_isuploaded: true,
+        ua_isnotapplicable: false,
+        ua_lastuploadon: "2026-04-20T08:32:00Z",
+        _ua_requestid_value: "req-anna-1",
+        _ua_filedocumentid_value: "fd-beslissing",
+      },
+    ],
+  ],
+]);
+
+// ----- Helpers -----
+
+function applyPatch(
+  row: RequestRow,
+  patch: Partial<RequestRow> | undefined,
+): RequestRow {
+  if (!patch) return row;
+  return { ...row, ...patch, ua_filetypeid: row.ua_filetypeid };
 }
 
-function state(): DemoState {
-  if (!globalThis[GLOBAL_KEY]) {
-    globalThis[GLOBAL_KEY] = buildSeedState();
-  }
-  return globalThis[GLOBAL_KEY];
+async function allRequests(): Promise<RequestRow[]> {
+  const snap = await readSnapshot();
+  const seed = SEED_REQUESTS.map((r) => applyPatch(r, snap.patchedRequests[r.ua_requestid]));
+  const created = snap.newRequests.map((r) =>
+    applyPatch({ ...r, ua_filetypeid: filetypeById(r._ua_filetypeid_value) }, snap.patchedRequests[r.ua_requestid]),
+  );
+  return [...seed, ...created];
 }
 
 // ----- API (mirrors lib/dataverse/queries.ts) -----
 
-export function getContactByEmail(email: string): Contact | null {
+export async function getContactByEmail(email: string): Promise<Contact | null> {
+  const snap = await readSnapshot();
   const lower = email.toLowerCase();
-  for (const c of state().contacts.values()) {
+  for (const c of Object.values(SEED_CONTACTS)) {
     if (
       c.emailaddress1?.toLowerCase() === lower ||
       c.ua_useremail?.toLowerCase() === lower
     ) {
+      const overlay = snap.sisaGranted[c.contactid];
+      if (overlay) {
+        return {
+          ...c,
+          ua_sisarequestgranted: true,
+          ua_sisarequestgrantedon: overlay,
+        };
+      }
       return c;
     }
   }
   return null;
 }
 
-export function getContact(contactid: string): Contact | null {
-  return state().contacts.get(contactid) ?? null;
-}
-
-export function grantSisa(contactid: string): void {
-  const s = state();
-  const c = s.contacts.get(contactid);
-  if (!c) return;
-  s.contacts.set(contactid, {
-    ...c,
-    ua_sisarequestgranted: true,
-    ua_sisarequestgrantedon: new Date().toISOString(),
-  });
+export async function grantSisa(contactid: string): Promise<void> {
+  await mutateSnapshot((s) => ({
+    ...s,
+    sisaGranted: { ...s.sisaGranted, [contactid]: new Date().toISOString() },
+  }));
 }
 
 export function listFiletypes(): FileType[] {
@@ -341,22 +334,25 @@ export function findFiletypeByCode(code: string): FileType | null {
   return FILETYPES.find((f) => f.ua_id === code) ?? null;
 }
 
-export function listRequestsForStudent(contactid: string): RequestRow[] {
-  return Array.from(state().requests.values())
+export async function listRequestsForStudent(contactid: string): Promise<RequestRow[]> {
+  const all = await allRequests();
+  return all
     .filter((r) => r._ua_studentid_value === contactid)
     .sort((a, b) => (b.createdon ?? "").localeCompare(a.createdon ?? ""));
 }
 
-export function getRequestById(requestId: string): RequestRow | null {
-  return state().requests.get(requestId) ?? null;
+export async function getRequestById(requestId: string): Promise<RequestRow | null> {
+  const all = await allRequests();
+  return all.find((r) => r.ua_requestid === requestId) ?? null;
 }
 
-export function findOpenRequest(
+export async function findOpenRequest(
   contactid: string,
   filetypeId: string,
-): RequestRow | null {
+): Promise<RequestRow | null> {
+  const all = await allRequests();
   return (
-    Array.from(state().requests.values()).find(
+    all.find(
       (r) =>
         r._ua_studentid_value === contactid &&
         r._ua_filetypeid_value === filetypeId &&
@@ -365,7 +361,7 @@ export function findOpenRequest(
   );
 }
 
-export function createDemoRequest(input: {
+export async function createDemoRequest(input: {
   studentId: string;
   fileTypeId: string;
   iban?: string | null;
@@ -373,14 +369,14 @@ export function createDemoRequest(input: {
   motivation?: string | null;
   isAlleenstaand?: boolean | null;
   referenceYear?: string | null;
-}): RequestRow {
-  const s = state();
-  const id = `req-demo-${++s.requestSeq}`;
-  const ft = FILETYPES.find((f) => f.ua_filetypeid === input.fileTypeId);
+}): Promise<RequestRow> {
+  const snap = await readSnapshot();
+  const seq = snap.newRequests.length + 100;
+  const id = `req-demo-${seq}-${Math.random().toString(36).slice(2, 6)}`;
   const row: RequestRow = {
     ua_requestid: id,
-    ua_name: `Demo aanvraag ${s.requestSeq}`,
-    ua_filenumber: `DM-2026-${String(s.requestSeq).padStart(4, "0")}`,
+    ua_name: `Demo aanvraag ${seq}`,
+    ua_filenumber: `DM-2026-${String(seq).padStart(4, "0")}`,
     createdon: new Date().toISOString(),
     modifiedon: new Date().toISOString(),
     statuscode: REQUEST_STATUS_CODE.IN_AANMAAK,
@@ -391,19 +387,22 @@ export function createDemoRequest(input: {
     ua_motivation: input.motivation ?? null,
     ua_isalleenstaand: input.isAlleenstaand ?? null,
     ua_referenceyear: input.referenceYear ?? null,
-    ua_filetypeid: ft,
   };
-  s.requests.set(id, row);
-  s.comments.set(id, []);
-  s.documents.set(id, []);
-  return row;
+  await mutateSnapshot((s) => ({ ...s, newRequests: [...s.newRequests, row] }));
+  return { ...row, ua_filetypeid: filetypeById(input.fileTypeId) };
 }
 
-export function updateDemoRequest(id: string, patch: Partial<RequestRow>): void {
-  const s = state();
-  const cur = s.requests.get(id);
-  if (!cur) return;
-  s.requests.set(id, { ...cur, ...patch, modifiedon: new Date().toISOString() });
+export async function updateDemoRequest(id: string, patch: Partial<RequestRow>): Promise<void> {
+  await mutateSnapshot((s) => {
+    const prev = s.patchedRequests[id] ?? {};
+    return {
+      ...s,
+      patchedRequests: {
+        ...s.patchedRequests,
+        [id]: { ...prev, ...patch, modifiedon: new Date().toISOString() },
+      },
+    };
+  });
 }
 
 export function listRequiredDocs(filetypeId: string): RequiredDocument[] {
@@ -417,7 +416,7 @@ export function listRequiredDocsByCode(code: string): RequiredDocument[] {
 }
 
 export function listDocs(requestId: string): DocumentRow[] {
-  return state().documents.get(requestId) ?? [];
+  return documentsState.get(requestId) ?? [];
 }
 
 export function setNotApplicable(
@@ -425,11 +424,10 @@ export function setNotApplicable(
   fileDocumentId: string,
   notApplicable: boolean,
 ): DocumentRow | null {
-  const s = state();
-  const arr = s.documents.get(requestId) ?? [];
+  const arr = documentsState.get(requestId) ?? [];
   const filtered = arr.filter((d) => d._ua_filedocumentid_value !== fileDocumentId);
   if (!notApplicable) {
-    s.documents.set(requestId, filtered);
+    documentsState.set(requestId, filtered);
     return null;
   }
   const row: DocumentRow = {
@@ -440,7 +438,7 @@ export function setNotApplicable(
     _ua_filedocumentid_value: fileDocumentId,
   };
   filtered.push(row);
-  s.documents.set(requestId, filtered);
+  documentsState.set(requestId, filtered);
   return row;
 }
 
@@ -449,8 +447,7 @@ export function recordDemoUpload(
   fileDocumentId: string,
   filename: string,
 ): DocumentRow {
-  const s = state();
-  const arr = s.documents.get(requestId) ?? [];
+  const arr = documentsState.get(requestId) ?? [];
   const filtered = arr.filter((d) => d._ua_filedocumentid_value !== fileDocumentId);
   const row: DocumentRow = {
     ua_documentid: `doc-${requestId}-${fileDocumentId}-${Date.now()}`,
@@ -463,31 +460,39 @@ export function recordDemoUpload(
     _ua_filedocumentid_value: fileDocumentId,
   };
   filtered.push(row);
-  s.documents.set(requestId, filtered);
+  documentsState.set(requestId, filtered);
   return row;
 }
 
-export function listDemoComments(requestId: string): Comment[] {
-  return state().comments.get(requestId) ?? [];
+export async function listDemoComments(requestId: string): Promise<Comment[]> {
+  const snap = await readSnapshot();
+  // newComments overlay replaces seed when present (so user-appended ones
+  // are visible alongside the originals — see appendDemoComment).
+  if (snap.newComments[requestId]) return snap.newComments[requestId];
+  return SEED_COMMENTS[requestId] ?? [];
 }
 
-export function appendDemoComment(
+export async function appendDemoComment(
   requestId: string,
   text: string,
   authorEmail: string,
-): Comment {
-  const s = state();
-  const arr = s.comments.get(requestId) ?? [];
-  const c = getContactByEmail(authorEmail);
+): Promise<Comment> {
+  const snap = await readSnapshot();
+  const c = await getContactByEmail(authorEmail);
+  const existing =
+    snap.newComments[requestId] ?? SEED_COMMENTS[requestId] ?? [];
   const created: Comment = {
-    id: `c-${++s.commentSeq}`,
+    id: `c-${Date.now()}`,
     text,
     createdOn: new Date().toISOString(),
     role: "student",
     authorName: c?.fullname ?? authorEmail,
   };
-  arr.push(created);
-  s.comments.set(requestId, arr);
+  const nextThread = [...existing, created];
+  await mutateSnapshot((s) => ({
+    ...s,
+    newComments: { ...s.newComments, [requestId]: nextThread },
+  }));
   return created;
 }
 

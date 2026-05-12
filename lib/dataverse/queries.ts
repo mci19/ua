@@ -51,7 +51,7 @@ export async function getCurrentStudent(auth: AuthContext): Promise<Contact | nu
 
 export async function grantSisaPermission(auth: AuthContext, contactId: string): Promise<void> {
   if (isDemoMode) {
-    demo.grantSisa(contactId);
+    await demo.grantSisa(contactId);
     return;
   }
   const dv = await getDataverseFor(auth);
@@ -77,7 +77,7 @@ export async function listMyRequests(
 
 export async function getRequest(auth: AuthContext, requestId: string): Promise<RequestRow> {
   if (isDemoMode) {
-    const row = demo.getRequestById(requestId);
+    const row = await demo.getRequestById(requestId);
     if (!row) throw new Error("Request not found");
     return row;
   }
@@ -107,7 +107,7 @@ export async function createRequest(
   input: CreateRequestInput,
 ): Promise<RequestRow> {
   if (isDemoMode) {
-    return demo.createDemoRequest({
+    return await demo.createDemoRequest({
       studentId: input.studentId,
       fileTypeId: input.fileTypeId,
       iban: input.iban,
@@ -137,7 +137,7 @@ export async function updateRequest(
   patch: Partial<CreateRequestInput> & { statuscode?: number },
 ): Promise<void> {
   if (isDemoMode) {
-    const cur = demo.getRequestById(requestId);
+    const cur = await demo.getRequestById(requestId);
     if (!cur) return;
     const next: Partial<RequestRow> = {};
     if (patch.iban !== undefined) next.ua_iban = patch.iban ?? null;
@@ -148,7 +148,7 @@ export async function updateRequest(
     if (patch.referenceYear !== undefined)
       next.ua_referenceyear = patch.referenceYear ?? null;
     if (patch.statuscode !== undefined) next.statuscode = patch.statuscode;
-    demo.updateDemoRequest(requestId, next);
+    await demo.updateDemoRequest(requestId, next);
     return;
   }
   const dv = await getDataverseFor(auth);
@@ -314,7 +314,7 @@ export async function createComment(
   text: string,
 ): Promise<{ id?: string }> {
   if (isDemoMode) {
-    const c = demo.appendDemoComment(requestId, text, auth.email);
+    const c = await demo.appendDemoComment(requestId, text, auth.email);
     return { id: c.id };
   }
   const dv = await getDataverseFor(auth);

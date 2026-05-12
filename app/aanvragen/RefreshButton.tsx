@@ -13,7 +13,6 @@ export function RefreshButton() {
     <Button
       type="button"
       intent="subtle"
-      size="sm"
       disabled={pending}
       onClick={() => startTransition(() => router.refresh())}
     >
@@ -21,7 +20,7 @@ export function RefreshButton() {
         className={cn("h-4 w-4", pending && "animate-spin")}
         aria-hidden="true"
       />
-      <span className="hidden sm:inline">Vernieuwen</span>
+      Vernieuwen
     </Button>
   );
 }
