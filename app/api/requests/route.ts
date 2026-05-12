@@ -1,4 +1,5 @@
 import { jsonOk, withApi } from "@/lib/api/withApi";
+import { enforceRateLimit } from "@/lib/api/rateLimit";
 import { requireAuthContext } from "@/lib/auth/session";
 import {
   createRequest,
@@ -20,6 +21,7 @@ export const GET = withApi(async () => {
 
 export const POST = withApi(async (req) => {
   const auth = await requireAuthContext();
+  enforceRateLimit("createRequest", auth.oid);
   const json = await req.json();
   const input = createRequestSchema.parse(json);
 

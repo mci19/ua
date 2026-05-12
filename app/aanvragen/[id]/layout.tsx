@@ -6,6 +6,7 @@ import { wizardSteps } from "@/components/wizard/steps";
 import { routes } from "@/lib/constants/routes";
 import { getRequest } from "@/lib/dataverse/queries";
 import { requireStudent } from "@/lib/server/me";
+import { ApiError } from "@/lib/utils/errors";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -19,6 +20,22 @@ const PATH_TO_STEP: Record<string, string> = {
   ingediend: "berichten",
 };
 
+async function loadRequestOr404Redirect(
+  auth: Awaited<ReturnType<typeof requireStudent>>["auth"],
+  id: string,
+) {
+  try {
+    return await getRequest(auth, id);
+  } catch (err) {
+    // 404 / 403 → bounce to /aanvragen (request gone or not yours).
+    // 500 etc → let it bubble to error.tsx so we don't hide real bugs.
+    if (err instanceof ApiError && (err.status === 404 || err.status === 403)) {
+      return null;
+    }
+    throw err;
+  }
+}
+
 export default async function WizardLayout({
   children,
   params,
@@ -28,10 +45,7 @@ export default async function WizardLayout({
 }) {
   const { id } = await params;
   const { auth, student } = await requireStudent();
-  const request = await getRequest(auth, id).catch(() => null);
-  // If the request is gone (cookie expired, redeploy lost it, or wrong
-  // bookmark) we bounce back to /aanvragen rather than showing a hard 404
-  // — the dossier list is the right starting point.
+  const request = await loadRequestOr404Redirect(auth, id);
   if (!request) redirect(routes.myRequests);
   if (request._ua_studentid_value !== student.contactid) redirect(routes.myRequests);
 

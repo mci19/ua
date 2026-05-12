@@ -5,6 +5,7 @@ import { UALogo } from "@/components/common/UALogo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { isDemoMode } from "@/lib/demo/flag";
+import { safeRedirectPath } from "@/lib/utils/safeUrl";
 
 export default async function LoginPage({
   searchParams,
@@ -12,6 +13,9 @@ export default async function LoginPage({
   searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
   const { callbackUrl, error } = await searchParams;
+  // Whitelist relative paths only — defeats open-redirect via
+  // ?callbackUrl=https://evil.example.org
+  const redirectTo = safeRedirectPath(callbackUrl, "/");
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
       <section className="relative flex items-center justify-center bg-white p-10 lg:border-r-8 lg:border-ua-red">
@@ -41,7 +45,7 @@ export default async function LoginPage({
                   await signIn("demo", {
                     username: String(formData.get("username") ?? ""),
                     password: String(formData.get("password") ?? ""),
-                    redirectTo: callbackUrl ?? "/",
+                    redirectTo,
                   });
                 }}
                 className="space-y-4"
@@ -89,7 +93,7 @@ export default async function LoginPage({
               <form
                 action={async () => {
                   "use server";
-                  await signIn("microsoft-entra-id", { redirectTo: callbackUrl ?? "/" });
+                  await signIn("microsoft-entra-id", { redirectTo });
                 }}
               >
                 <Button type="submit" size="lg" className="w-full">

@@ -1,4 +1,5 @@
 import { jsonOk, withApi } from "@/lib/api/withApi";
+import { enforceRateLimit } from "@/lib/api/rateLimit";
 import { requireAuthContext } from "@/lib/auth/session";
 import {
   createComment,
@@ -25,6 +26,7 @@ export const GET = withApi<{ id: string }>(async (_req, ctx) => {
 export const POST = withApi<{ id: string }>(async (req, ctx) => {
   const { id } = await ctx.params;
   const auth = await requireAuthContext();
+  enforceRateLimit("comment", auth.oid);
   const request = await getRequest(auth, id);
   const student = await getCurrentStudent(auth);
   if (!student) throw new ApiError(404, "Student not found");

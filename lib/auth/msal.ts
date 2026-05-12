@@ -1,5 +1,6 @@
 import { ConfidentialClientApplication, LogLevel } from "@azure/msal-node";
 import { isDemoMode } from "@/lib/demo/flag";
+import { ApiError } from "@/lib/utils/errors";
 
 let cached: ConfidentialClientApplication | null = null;
 
@@ -8,7 +9,7 @@ let cached: ConfidentialClientApplication | null = null;
 // demo bundle later, swap the import for a dynamic `await import(...)`.
 export function getConfidentialClient(): ConfidentialClientApplication {
   if (isDemoMode) {
-    throw new Error("MSAL client is not available in demo mode");
+    throw new ApiError(500, "MSAL client is not available in demo mode");
   }
   if (cached) return cached;
   const tenantId = required("AZURE_AD_TENANT_ID");
@@ -36,6 +37,6 @@ export function getConfidentialClient(): ConfidentialClientApplication {
 
 function required(key: string): string {
   const v = process.env[key];
-  if (!v) throw new Error(`Missing env var: ${key}`);
+  if (!v) throw new ApiError(500, `Missing env var: ${key}`);
   return v;
 }

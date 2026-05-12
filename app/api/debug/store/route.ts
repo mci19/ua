@@ -1,15 +1,16 @@
 import { auth } from "@/lib/auth/auth";
-import { isDemoMode } from "@/lib/demo/flag";
 import { listFiletypes, listRequestsForStudent } from "@/lib/demo/store";
+import { isDemoMode } from "@/lib/demo/flag";
+import { debugNotFound, isDebugEndpointAllowed } from "@/lib/api/debugGuard";
 
 // Demo-only diagnostic: dumps what's currently in the in-memory store so
-// we can verify the seed actually loaded. Returns 404 in production.
+// we can verify the seed actually loaded. Returns 404 in production
+// unless explicitly opted-in via UA_ALLOW_DEMO_IN_PROD.
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  if (!isDemoMode) {
-    return new Response("Demo mode is not enabled.", { status: 404 });
-  }
+  if (!isDebugEndpointAllowed() || !isDemoMode) return debugNotFound();
+
   const session = await auth();
   const annaRequests = await listRequestsForStudent(
     "00000000-0000-0000-0000-000000000001",

@@ -17,6 +17,7 @@ import type {
 import { REQUEST_STATUS_CODE } from "@/lib/constants/statuses";
 import { isDemoMode } from "@/lib/demo/flag";
 import * as demo from "@/lib/demo/store";
+import { ApiError } from "@/lib/utils/errors";
 
 export async function getDataverseFor(auth: AuthContext) {
   const token = await exchangeForDataverseToken(auth.oid, auth.userAssertion);
@@ -78,7 +79,11 @@ export async function listMyRequests(
 export async function getRequest(auth: AuthContext, requestId: string): Promise<RequestRow> {
   if (isDemoMode) {
     const row = await demo.getRequestById(requestId);
-    if (!row) throw new Error("Request not found");
+    if (!row) {
+      throw new ApiError(404, "Request not found", {
+        dutchMessage: "Deze aanvraag bestaat niet (meer).",
+      });
+    }
     return row;
   }
   const dv = await getDataverseFor(auth);
@@ -118,7 +123,7 @@ export async function createRequest(
     });
   }
   const dv = await getDataverseFor(auth);
-  const body: Record<string, unknown> = {
+  const body: CreateRequestBody = {
     "ua_studentid@odata.bind": `/${ENTITY_SETS.contact}(${input.studentId})`,
     "ua_filetypeid@odata.bind": `/${ENTITY_SETS.ua_filetype}(${input.fileTypeId})`,
     statuscode: REQUEST_STATUS_CODE.IN_AANMAAK,
@@ -128,7 +133,29 @@ export async function createRequest(
   if (input.motivation !== undefined) body.ua_motivation = input.motivation;
   if (input.isAlleenstaand !== undefined) body.ua_isalleenstaand = input.isAlleenstaand;
   if (input.referenceYear !== undefined) body.ua_referenceyear = input.referenceYear;
-  return dv.create<RequestRow>(ENTITY_SETS.ua_request, body);
+  return dv.create<RequestRow>(ENTITY_SETS.ua_request, body as unknown as Record<string, unknown>);
+}
+
+// Typed bodies for Dataverse Web API create/update calls. Catches typos at
+// compile time and clarifies which OData binding belongs to which entity.
+interface CreateRequestBody {
+  "ua_studentid@odata.bind": string;
+  "ua_filetypeid@odata.bind": string;
+  statuscode: number;
+  ua_iban?: string | null;
+  ua_bic?: string | null;
+  ua_motivation?: string | null;
+  ua_isalleenstaand?: boolean | null;
+  ua_referenceyear?: string | null;
+}
+
+interface UpdateRequestBody {
+  statuscode?: number;
+  ua_iban?: string | null;
+  ua_bic?: string | null;
+  ua_motivation?: string | null;
+  ua_isalleenstaand?: boolean | null;
+  ua_referenceyear?: string | null;
 }
 
 export async function updateRequest(
@@ -152,14 +179,14 @@ export async function updateRequest(
     return;
   }
   const dv = await getDataverseFor(auth);
-  const body: Record<string, unknown> = {};
+  const body: UpdateRequestBody = {};
   if (patch.iban !== undefined) body.ua_iban = patch.iban;
   if (patch.bic !== undefined) body.ua_bic = patch.bic;
   if (patch.motivation !== undefined) body.ua_motivation = patch.motivation;
   if (patch.isAlleenstaand !== undefined) body.ua_isalleenstaand = patch.isAlleenstaand;
   if (patch.referenceYear !== undefined) body.ua_referenceyear = patch.referenceYear;
   if (patch.statuscode !== undefined) body.statuscode = patch.statuscode;
-  await dv.update(ENTITY_SETS.ua_request, requestId, body);
+  await dv.update(ENTITY_SETS.ua_request, requestId, body as unknown as Record<string, unknown>);
 }
 
 export async function submitRequest(auth: AuthContext, requestId: string): Promise<void> {

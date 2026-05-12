@@ -26,7 +26,7 @@ export default async function VoorschotPage({
   const auth = await requireAuthContext();
   const [request, existing] = await Promise.all([
     getRequest(auth, id),
-    listDocumentsForRequest(auth, id).catch(() => []),
+    listDocumentsForRequest(auth, id),
   ]);
   const code = request.ua_filetypeid?.ua_id;
   const filetypeRef = request._ua_filetypeid_value ?? code ?? "";

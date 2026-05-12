@@ -1,4 +1,5 @@
 import { jsonOk, withApi } from "@/lib/api/withApi";
+import { enforceRateLimit } from "@/lib/api/rateLimit";
 import { requireAuthContext } from "@/lib/auth/session";
 import { getCurrentStudent, getRequest, updateRequest } from "@/lib/dataverse/queries";
 import { ApiError } from "@/lib/utils/errors";
@@ -16,6 +17,7 @@ export const GET = withApi<{ id: string }>(async (_req, ctx) => {
 export const PATCH = withApi<{ id: string }>(async (req, ctx) => {
   const { id } = await ctx.params;
   const auth = await requireAuthContext();
+  enforceRateLimit("updateRequest", auth.oid);
   const row = await getRequest(auth, id);
   await assertOwnership(auth, row);
   if (!isEditable(row.statuscode)) {

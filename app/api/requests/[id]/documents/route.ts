@@ -1,4 +1,5 @@
 import { jsonOk, withApi } from "@/lib/api/withApi";
+import { enforceRateLimit } from "@/lib/api/rateLimit";
 import { requireAuthContext } from "@/lib/auth/session";
 import {
   clearDocumentForReupload,
@@ -38,6 +39,7 @@ export const GET = withApi<{ id: string }>(async (_req, ctx) => {
 export const POST = withApi<{ id: string }>(async (req, ctx) => {
   const { id } = await ctx.params;
   const auth = await requireAuthContext();
+  enforceRateLimit("uploadDocument", auth.oid);
   const request = await assertOwnership(auth, id);
 
   const form = await req.formData();

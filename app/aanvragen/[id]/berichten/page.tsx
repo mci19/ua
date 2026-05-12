@@ -21,7 +21,7 @@ export default async function MessagesPage({
   const auth = await requireAuthContext();
   const [request, comments] = await Promise.all([
     getRequest(auth, id),
-    listComments(auth, id, auth.email).catch(() => []),
+    listComments(auth, id, auth.email),
   ]);
   return (
     <Stack gap="lg">

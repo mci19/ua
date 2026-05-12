@@ -9,6 +9,7 @@ import { Text } from "@/components/ui/text";
 import { requireStudent } from "@/lib/server/me";
 import { SisaGrantForm } from "./SisaGrantForm";
 import { formatDateTime } from "@/lib/utils/date";
+import { safeRedirectPath } from "@/lib/utils/safeUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +49,7 @@ export default async function SisaGrantPage({
                 </Text>
               </Stack>
               <DescriptionList items={items} />
-              <SisaGrantForm returnTo={returnTo ?? "/aanvragen/nieuw"} />
+              <SisaGrantForm returnTo={safeRedirectPath(returnTo, "/aanvragen/nieuw")} />
             </Stack>
           </CardContent>
         </Card>

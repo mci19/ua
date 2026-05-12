@@ -1,4 +1,4 @@
-import { toApiErrorFromDataverse } from "@/lib/utils/errors";
+import { ApiError, toApiErrorFromDataverse } from "@/lib/utils/errors";
 import { logger } from "@/lib/utils/logger";
 import type { DataverseListResponse } from "@/lib/dataverse/types";
 
@@ -107,6 +107,6 @@ export function escapeOData(value: string): string {
 
 function requireEnv(key: string): string {
   const v = process.env[key];
-  if (!v) throw new Error(`Missing env var: ${key}`);
+  if (!v) throw new ApiError(500, `Missing env var: ${key}`);
   return v;
 }

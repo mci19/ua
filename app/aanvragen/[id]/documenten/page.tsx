@@ -27,9 +27,9 @@ export default async function DocumentsPage({
   const request = await getRequest(auth, id);
   const [required, existing] = await Promise.all([
     request._ua_filetypeid_value
-      ? listRequiredDocuments(auth, request._ua_filetypeid_value).catch(() => [])
+      ? listRequiredDocuments(auth, request._ua_filetypeid_value)
       : Promise.resolve([]),
-    listDocumentsForRequest(auth, id).catch(() => []),
+    listDocumentsForRequest(auth, id),
   ]);
   const editable = isEditable(request.statuscode);
 

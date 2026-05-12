@@ -7,6 +7,12 @@ import type { Comment, RequestRow } from "@/lib/dataverse/types";
 // *mutations* in an httpOnly cookie. The cookie travels with the session
 // and survives cold starts, so a request created on instance A is still
 // visible when the redirect lands on instance B.
+//
+// NOTE on race conditions: mutateSnapshot() is read-modify-write and
+// not serialised. Two parallel POSTs from the same session can clobber
+// each other. Acceptable for a single-user demo flow; would need a real
+// store (DB) for production scenarios — but production uses Dataverse
+// directly, so this code path is never on the productive critical path.
 
 const COOKIE_NAME = "ua_demo_state";
 const MAX_AGE_SECONDS = 60 * 60 * 4; // 4 hours
@@ -54,6 +60,7 @@ export async function writeSnapshot(snap: DemoSnapshot): Promise<void> {
     sameSite: "lax",
     path: "/",
     maxAge: MAX_AGE_SECONDS,
+    secure: process.env.NODE_ENV === "production",
   });
 }
 
