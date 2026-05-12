@@ -3,6 +3,9 @@ import { isDemoMode } from "@/lib/demo/flag";
 
 let cached: ConfidentialClientApplication | null = null;
 
+// In demo mode this constructor is never invoked, so the @azure/msal-node
+// import is fine. If you want to drop the dependency entirely from the
+// demo bundle later, swap the import for a dynamic `await import(...)`.
 export function getConfidentialClient(): ConfidentialClientApplication {
   if (isDemoMode) {
     throw new Error("MSAL client is not available in demo mode");

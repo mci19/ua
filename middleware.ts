@@ -1,7 +1,15 @@
 import NextAuth from "next-auth";
 import authConfig from "@/auth.config";
 
-const PUBLIC_PREFIXES = ["/login", "/api/auth", "/_next", "/favicon.ico", "/assets"];
+const PUBLIC_PREFIXES = [
+  "/login",
+  "/api/auth",
+  "/api/health",
+  "/_next",
+  "/favicon.ico",
+  "/icon.svg",
+  "/assets",
+];
 
 const { auth } = NextAuth(authConfig);
 
