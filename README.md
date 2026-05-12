@@ -140,6 +140,9 @@ For "niet van toepassing" rows there is nothing to upload; we insert `ua_documen
 
 ## Deploying
 
+> See [RUNBOOK.md](./RUNBOOK.md) for the operational playbook (incident
+> response, deep health-check, rate-limit tuning, Sentry).
+
 ### Netlify (primary target)
 
 1. Connect this repo in the Netlify dashboard. The `netlify.toml` already sets

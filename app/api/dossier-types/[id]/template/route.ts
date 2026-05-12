@@ -28,7 +28,16 @@ export const GET = withApi<{ id: string }>(async (_req, ctx) => {
 
   const bytes = Uint8Array.from(Buffer.from(ann.documentbody, "base64"));
   const filename = ann.filename ?? "sjabloon.pdf";
-  const mimetype = ann.mimetype ?? "application/pdf";
+  // Hard-pin to application/pdf: even if a staff user uploads a Word
+  // document by mistake, refusing to mirror that mimetype prevents
+  // serving an executable type back to the browser.
+  const ALLOWED_MIME = new Set([
+    "application/pdf",
+    "application/x-pdf",
+  ]);
+  const mimetype = ALLOWED_MIME.has(ann.mimetype ?? "")
+    ? ann.mimetype!
+    : "application/pdf";
 
   return new Response(bytes, {
     status: 200,

@@ -1,9 +1,11 @@
+import { getTranslations } from "next-intl/server";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
-export default function Loading() {
+export default async function Loading() {
+  const t = await getTranslations("errors");
   return (
     <div className="container py-10">
-      <LoadingSpinner label="Dossier laden…" />
+      <LoadingSpinner label={t("loadingDossier")} />
     </div>
   );
 }

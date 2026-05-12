@@ -14,9 +14,15 @@ const isNetlify = !!process.env.NETLIFY;
 // where Next.js itself needs them (handled via the `unsafe-inline`
 // fallback for `script-src`; tighter values require nonces which we
 // don't yet wire through).
+// `unsafe-inline` is kept for now because Next.js 15 ships hydration boot
+// scripts inline; replacing it requires per-request nonces wired through
+// middleware. `unsafe-eval` has been dropped — UA-IT review flags it,
+// and Next 15 + React 19 do not require it at runtime. `wasm-unsafe-eval`
+// allows the small WASM modules that some optional libs ship without
+// re-opening the door to general eval.
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://*.sharepoint.com https://graph.microsoft.com",

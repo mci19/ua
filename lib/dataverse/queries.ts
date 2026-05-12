@@ -1,4 +1,4 @@
-import { createDataverseClient, escapeOData } from "@/lib/dataverse/client";
+import { assertGuid, createDataverseClient, escapeOData } from "@/lib/dataverse/client";
 import { ENTITY_SETS } from "@/lib/dataverse/pluralize";
 import { exchangeForDataverseToken } from "@/lib/auth/tokens";
 import type { AuthContext } from "@/lib/auth/session";
@@ -67,8 +67,11 @@ export async function listMyRequests(
   contactId: string,
 ): Promise<RequestRow[]> {
   if (isDemoMode) return demo.listRequestsForStudent(contactId);
+  assertGuid(contactId, "contactId");
   const dv = await getDataverseFor(auth);
-  return dv.list<RequestRow>(ENTITY_SETS.ua_request, {
+  // Power users with long histories can exceed Dataverse's default 5000-row
+  // page; listAll follows @odata.nextLink so the list is complete.
+  return dv.listAll<RequestRow>(ENTITY_SETS.ua_request, {
     $select: REQUEST_SELECT,
     $expand: "ua_filetypeid($select=ua_id,ua_name)",
     $filter: `_ua_studentid_value eq ${contactId}`,
@@ -86,6 +89,7 @@ export async function getRequest(auth: AuthContext, requestId: string): Promise<
     }
     return row;
   }
+  assertGuid(requestId, "requestId");
   const dv = await getDataverseFor(auth);
   return dv.get<RequestRow>(ENTITY_SETS.ua_request, requestId, {
     $select: REQUEST_SELECT,
@@ -122,6 +126,8 @@ export async function createRequest(
       referenceYear: input.referenceYear,
     });
   }
+  assertGuid(input.studentId, "studentId");
+  assertGuid(input.fileTypeId, "fileTypeId");
   const dv = await getDataverseFor(auth);
   const body: CreateRequestBody = {
     "ua_studentid@odata.bind": `/${ENTITY_SETS.contact}(${input.studentId})`,
@@ -178,6 +184,7 @@ export async function updateRequest(
     await demo.updateDemoRequest(requestId, next);
     return;
   }
+  assertGuid(requestId, "requestId");
   const dv = await getDataverseFor(auth);
   const body: UpdateRequestBody = {};
   if (patch.iban !== undefined) body.ua_iban = patch.iban;
@@ -223,6 +230,7 @@ export async function listRequiredDocuments(
   fileTypeId: string,
 ): Promise<RequiredDocument[]> {
   if (isDemoMode) return demo.listRequiredDocs(fileTypeId);
+  assertGuid(fileTypeId, "fileTypeId");
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<DocumentConfigurationRow>(
     ENTITY_SETS.ua_documentconfiguration,
@@ -248,6 +256,7 @@ export async function listDocumentsForRequest(
   requestId: string,
 ): Promise<DocumentRow[]> {
   if (isDemoMode) return demo.listDocs(requestId);
+  assertGuid(requestId, "requestId");
   const dv = await getDataverseFor(auth);
   return dv.list<DocumentRow>(ENTITY_SETS.ua_document, {
     $select:
@@ -263,6 +272,8 @@ async function deleteExistingDocumentRows(
   requestId: string,
   fileDocumentId: string,
 ): Promise<void> {
+  assertGuid(requestId, "requestId");
+  assertGuid(fileDocumentId, "fileDocumentId");
   const dv = await getDataverseFor(auth);
   const existing = await dv.list<DocumentRow>(ENTITY_SETS.ua_document, {
     $select: "ua_documentid",
@@ -307,12 +318,23 @@ export async function clearDocumentForReupload(
 
 // ua_comment is an Activity entity with no custom author flag. We expand
 // createdby and infer role by comparing its email to the calling student's.
+//
+// A3 — UNRESOLVED with UA (deferred): in a delegated-OBO setup every
+// student-side write runs as the student's identity, so createdby == student
+// for student-authored comments. However, if a future deployment switches to
+// Application-User (S2S) writes, *every* comment becomes
+// createdby=AppUser and this email-equality check collapses. The agreed
+// solution is one of (a) a boolean `ua_authoredbystaff` on ua_comment, or
+// (c) a custom `ua_authorcontactid` lookup. Both schema-side changes are
+// owned by UA; this code is forward-compatible with either choice as long
+// as the role-inference happens server-side here.
 export async function listComments(
   auth: AuthContext,
   requestId: string,
   studentEmail: string,
 ): Promise<Comment[]> {
   if (isDemoMode) return demo.listDemoComments(requestId);
+  assertGuid(requestId, "requestId");
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<CommentRow>(ENTITY_SETS.ua_comment, {
     $select:
@@ -344,12 +366,25 @@ export async function createComment(
     const c = await demo.appendDemoComment(requestId, text, auth.email);
     return { id: c.id };
   }
+  assertGuid(requestId, "requestId");
   const dv = await getDataverseFor(auth);
+  // Two parent-pointers are populated:
+  // 1. regardingobjectid_ua_request — the OOTB polymorphic Activity lookup
+  //    that staff filter views and Power Automate flows rely on
+  // 2. ua_requestid — the custom OneToMany lookup defined in
+  //    customizations.xml (relationship `ua_comment_requestid_ua_request`,
+  //    ReferencingAttributeName `ua_requestid`). Both nav-property forms
+  //    are accepted by Dataverse Web API; we pick the short attribute name
+  //    that matches the *_value column used in $filter elsewhere.
+  // subject is non-nullable on Activity entities; we fall back to a
+  // placeholder when the comment is short.
+  const trimmedSubject = text.slice(0, 200).trim() || "Bericht";
   // ownerid + createdby are filled in by Dataverse from the caller's identity.
   const created = await dv.create<CommentRow>(ENTITY_SETS.ua_comment, {
+    "regardingobjectid_ua_request@odata.bind": `/${ENTITY_SETS.ua_request}(${requestId})`,
     "ua_requestid@odata.bind": `/${ENTITY_SETS.ua_request}(${requestId})`,
     ua_comment: text,
-    subject: text.slice(0, 200),
+    subject: trimmedSubject,
   });
   return { id: created.activityid };
 }
@@ -359,6 +394,7 @@ export async function findRequestFolder(
   requestId: string,
 ): Promise<SharePointDocumentLocation | null> {
   if (isDemoMode) return null;
+  assertGuid(requestId, "requestId");
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<SharePointDocumentLocation>(
     ENTITY_SETS.sharepointdocumentlocation,
@@ -378,6 +414,8 @@ export async function findOpenRequestOfType(
   fileTypeId: string,
 ): Promise<RequestRow | null> {
   if (isDemoMode) return demo.findOpenRequest(contactId, fileTypeId);
+  assertGuid(contactId, "contactId");
+  assertGuid(fileTypeId, "fileTypeId");
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<RequestRow>(ENTITY_SETS.ua_request, {
     $select: "ua_requestid,statuscode,_ua_filetypeid_value,_ua_studentid_value",
@@ -396,6 +434,7 @@ export async function getFiletypeTemplate(
   fileTypeId: string,
 ): Promise<AnnotationRow | null> {
   if (isDemoMode) return demo.getDemoTemplate(fileTypeId);
+  assertGuid(fileTypeId, "fileTypeId");
   const dv = await getDataverseFor(auth);
   const rows = await dv.list<AnnotationRow>(ENTITY_SETS.annotation, {
     $select: "annotationid,filename,mimetype,documentbody,isdocument,_objectid_value",

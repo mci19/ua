@@ -21,6 +21,37 @@ export interface UploadedItem {
 
 const FOUR_MB = 4 * 1024 * 1024;
 const CHUNK_SIZE = 5 * 1024 * 1024;
+const MAX_RETRIES = 3;
+
+// SharePoint forbids /, \, :, *, ?, ", <, >, |, #, %, plus control chars
+// and trailing whitespace/dots; full names cannot exceed 255 chars.
+export function sanitizeFilename(filename: string): string {
+  const cleaned = filename
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\x00-\x1f]/g, "")
+    .replace(/[/\\:*?"<>|#%]/g, "_")
+    .replace(/^\.+/, "")
+    .replace(/[\s.]+$/g, "")
+    .slice(0, 200)
+    .trim();
+  return cleaned || "bestand";
+}
+
+// Honours Retry-After when set; otherwise exponential backoff 1s/2s/4s.
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  attempt = 0,
+): Promise<Response> {
+  const res = await fetch(url, init);
+  if ((res.status === 429 || res.status >= 500) && attempt < MAX_RETRIES) {
+    const retryAfter = Number(res.headers.get("Retry-After")) || 2 ** attempt;
+    logger.warn("Graph upload retry", { status: res.status, attempt, retryAfter });
+    await new Promise((r) => setTimeout(r, retryAfter * 1000));
+    return fetchWithRetry(url, init, attempt + 1);
+  }
+  return res;
+}
 
 export async function uploadDocument({
   client,
@@ -30,7 +61,7 @@ export async function uploadDocument({
   filename,
   content,
 }: UploadArgs): Promise<UploadedItem> {
-  const safeName = filename.replace(/[\/\\:*?"<>|]/g, "_").trim();
+  const safeName = sanitizeFilename(filename);
   const itemPath = `${folderPath.replace(/^\/+|\/+$/g, "")}/${safeName}`;
   const bytes = content instanceof Uint8Array ? content : new Uint8Array(content);
 
@@ -53,7 +84,7 @@ export async function uploadDocument({
     const end = Math.min(offset + CHUNK_SIZE, bytes.byteLength);
     const chunk = bytes.slice(offset, end);
     const body: BodyInit = new Blob([chunk]);
-    const res = await fetch(uploadUrl, {
+    const res = await fetchWithRetry(uploadUrl, {
       method: "PUT",
       headers: {
         "Content-Length": String(chunk.byteLength),

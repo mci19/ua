@@ -1,7 +1,9 @@
-// Runs once when the Next.js server boots. We deliberately do NOT
-// silently auto-fix obviously-malformed env vars — we *warn* but leave
-// the value untouched in production, so the operator notices it. In
-// development we still patch missing schemes to keep local DX smooth.
+// Runs once when the Next.js server boots. Two responsibilities:
+//   1. Warn about obviously-malformed NEXTAUTH_URL / AUTH_URL — we do
+//      NOT silently auto-fix in production so the operator notices it,
+//      but we do patch in development to keep local DX smooth.
+//   2. Initialise Sentry if @sentry/nextjs is installed and SENTRY_DSN
+//      is set; otherwise no-op.
 export async function register() {
   const isProd = process.env.NODE_ENV === "production";
 
@@ -33,4 +35,9 @@ export async function register() {
     }
     process.env[key] = trimmed;
   }
+
+  // Sentry init is a no-op when SENTRY_DSN is unset or the package is not
+  // installed — see lib/observability/sentry.ts.
+  const { initSentry } = await import("@/lib/observability/sentry");
+  await initSentry();
 }
