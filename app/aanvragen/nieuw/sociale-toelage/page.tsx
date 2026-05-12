@@ -2,11 +2,9 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Topbar, SignOutButton } from "@/components/common/Topbar";
 import { PageShell } from "@/components/common/PageShell";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Stack } from "@/components/ui/stack";
-import { Text } from "@/components/ui/text";
 import {
   FILE_TYPE_CODE,
   FILE_TYPE_LABEL_NL,
@@ -47,17 +45,12 @@ export default function SocialAllowancePickerPage() {
           <Stack as="ul" gap="sm">
             {scenarios.map(({ code, href }) => (
               <li key={code}>
-                <Card className="transition hover:border-ua-navy">
-                  <Link
-                    href={href}
-                    className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ua-navy focus-visible:ring-offset-2 rounded-lg"
-                  >
-                    <CardContent className="flex items-center justify-between gap-4 p-5">
-                      <Text size="label">{FILE_TYPE_LABEL_NL[code]}</Text>
-                      <ChevronRight className="h-5 w-5 text-ua-navy" aria-hidden="true" />
-                    </CardContent>
+                <Button asChild intent="primary" size="lg" className="w-full justify-between">
+                  <Link href={href}>
+                    <span className="text-left">{FILE_TYPE_LABEL_NL[code]}</span>
+                    <ChevronRight className="h-5 w-5" aria-hidden="true" />
                   </Link>
-                </Card>
+                </Button>
               </li>
             ))}
           </Stack>

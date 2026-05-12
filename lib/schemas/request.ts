@@ -10,7 +10,10 @@ const bicSchema = z
   .optional()
   .or(z.literal(""));
 
-const socialAllowanceSchema = z.object({
+// Exported individually so each form component can import only the schema
+// it needs — keeps the per-form Zod resolver simple and prevents
+// cross-variant validation noise.
+export const socialAllowanceSchema = z.object({
   fileTypeCode: z.enum([
     SOCIAL_ALLOWANCE_SCENARIOS[0],
     SOCIAL_ALLOWANCE_SCENARIOS[1],
@@ -24,7 +27,7 @@ const socialAllowanceSchema = z.object({
   referenceYear: referenceYearSchema,
 });
 
-const advanceSchema = z.object({
+export const advanceSchema = z.object({
   fileTypeCode: z.literal(FILE_TYPE_CODE.VOORSCHOT_STUDIETOELAGE),
   iban: ibanSchema,
   bic: bicSchema,
@@ -32,18 +35,24 @@ const advanceSchema = z.object({
   referenceYear: referenceYearSchema,
 });
 
-const powerOfAttorneySchema = z.object({
+export const powerOfAttorneySchema = z.object({
   fileTypeCode: z.literal(FILE_TYPE_CODE.VERLENEN_VAN_VOLMACHT),
   motivation: motivationSchema.optional(),
 });
 
-export const createRequestSchema = z.union([
+// Server-side discriminated union — the API route validates incoming
+// payloads against this. Discriminated union (vs plain union) gives clearer
+// error messages and faster parsing.
+export const createRequestSchema = z.discriminatedUnion("fileTypeCode", [
   socialAllowanceSchema,
   advanceSchema,
   powerOfAttorneySchema,
 ]);
 
 export type CreateRequestInput = z.infer<typeof createRequestSchema>;
+export type SocialAllowanceInput = z.infer<typeof socialAllowanceSchema>;
+export type AdvanceInput = z.infer<typeof advanceSchema>;
+export type PowerOfAttorneyInput = z.infer<typeof powerOfAttorneySchema>;
 
 export const updateRequestSchema = z.object({
   iban: ibanSchema.optional(),

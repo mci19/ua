@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,13 +14,14 @@ import { Stack } from "@/components/ui/stack";
 import { Text } from "@/components/ui/text";
 import { WizardActions } from "@/components/ui/wizard-actions";
 import { FormField, FormGrid } from "@/components/forms/FormField";
-import { createRequestSchema, type CreateRequestInput } from "@/lib/schemas/request";
+import {
+  socialAllowanceSchema,
+  type SocialAllowanceInput,
+} from "@/lib/schemas/request";
 import { apiFetch, type ClientApiError } from "@/lib/api/fetcher";
 import { type FileTypeCode } from "@/lib/constants/dossierTypes";
 import { currentAcademicYear } from "@/lib/utils/date";
 import { routes } from "@/lib/constants/routes";
-
-type FormValues = Extract<CreateRequestInput, { fileTypeCode: FileTypeCode; iban: string }>;
 
 export function SocialAllowanceForm({ scenarioCode }: { scenarioCode: FileTypeCode }) {
   const router = useRouter();
@@ -30,10 +31,10 @@ export function SocialAllowanceForm({ scenarioCode }: { scenarioCode: FileTypeCo
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(createRequestSchema),
+  } = useForm<SocialAllowanceInput>({
+    resolver: zodResolver(socialAllowanceSchema),
     defaultValues: {
-      fileTypeCode: scenarioCode as FormValues["fileTypeCode"],
+      fileTypeCode: scenarioCode as SocialAllowanceInput["fileTypeCode"],
       referenceYear: currentAcademicYear(),
       isAlleenstaand: false,
       iban: "",
@@ -43,7 +44,7 @@ export function SocialAllowanceForm({ scenarioCode }: { scenarioCode: FileTypeCo
   });
 
   const create = useMutation({
-    mutationFn: (values: FormValues) =>
+    mutationFn: (values: SocialAllowanceInput) =>
       apiFetch<{ ua_requestid: string }>("/api/requests", {
         method: "POST",
         body: JSON.stringify(values),

@@ -11,15 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Stack } from "@/components/ui/stack";
 import { WizardActions } from "@/components/ui/wizard-actions";
 import { FormField } from "@/components/forms/FormField";
-import { createRequestSchema, type CreateRequestInput } from "@/lib/schemas/request";
+import {
+  powerOfAttorneySchema,
+  type PowerOfAttorneyInput,
+} from "@/lib/schemas/request";
 import { FILE_TYPE_CODE } from "@/lib/constants/dossierTypes";
 import { apiFetch, type ClientApiError } from "@/lib/api/fetcher";
 import { routes } from "@/lib/constants/routes";
-
-type FormValues = Extract<
-  CreateRequestInput,
-  { fileTypeCode: typeof FILE_TYPE_CODE.VERLENEN_VAN_VOLMACHT }
->;
 
 export function PowerOfAttorneyForm() {
   const router = useRouter();
@@ -27,8 +25,8 @@ export function PowerOfAttorneyForm() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(createRequestSchema),
+  } = useForm<PowerOfAttorneyInput>({
+    resolver: zodResolver(powerOfAttorneySchema),
     defaultValues: {
       fileTypeCode: FILE_TYPE_CODE.VERLENEN_VAN_VOLMACHT,
       motivation: "",
@@ -36,7 +34,7 @@ export function PowerOfAttorneyForm() {
   });
 
   const create = useMutation({
-    mutationFn: (values: FormValues) =>
+    mutationFn: (values: PowerOfAttorneyInput) =>
       apiFetch<{ ua_requestid: string }>("/api/requests", {
         method: "POST",
         body: JSON.stringify(values),

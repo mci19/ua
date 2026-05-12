@@ -34,14 +34,14 @@ export default async function OverviewPage() {
             <ActionCard
               href={sisaPath}
               icon={Plus}
-              iconTone="navy"
+              intent="primary"
               title="Aanvraag starten"
               description="Vraag een sociale toelage, voorschot of volmacht aan."
             />
             <ActionCard
               href={routes.myRequests}
               icon={FolderOpen}
-              iconTone="red"
+              intent="secondary"
               title="Mijn aanvragen"
               description={requestCountLabel}
             />

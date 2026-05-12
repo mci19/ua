@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -113,13 +114,17 @@ export function EditRequestForm({
             </Button>
           </WizardActions>
         ) : (
-          <Text size="small" tone="muted">
-            Deze aanvraag is ingediend en kan niet meer worden aangepast.{" "}
-            <a href={routes.requestMessages(request.ua_requestid)} className="ua-link">
-              Open de berichten
-            </a>{" "}
-            om met de dossierbeheerder te communiceren.
-          </Text>
+          <Stack gap="sm">
+            <Text size="small" tone="muted">
+              Deze aanvraag is ingediend en kan niet meer worden aangepast.
+              Gebruik de berichten om met de dossierbeheerder te communiceren.
+            </Text>
+            <Button asChild intent="primary" className="self-start">
+              <Link href={routes.requestMessages(request.ua_requestid)}>
+                Naar berichten
+              </Link>
+            </Button>
+          </Stack>
         )}
       </Stack>
     </form>

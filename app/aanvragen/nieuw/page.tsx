@@ -17,6 +17,7 @@ const choices = [
     title: "Aanvraag sociale toelage",
     description:
       "Een financiële tegemoetkoming als je tijdelijk moeilijk rondkomt en geen of een onvoldoende studietoelage ontvangt.",
+    intent: "primary" as const,
   },
   {
     href: "/aanvragen/nieuw/voorschot",
@@ -24,6 +25,7 @@ const choices = [
     title: "Aanvraag voorschot studietoelage",
     description:
       "Vraag een voorschot aan in afwachting van je goedgekeurde studietoelage van de Vlaamse overheid.",
+    intent: "primary" as const,
   },
   {
     href: "/aanvragen/nieuw/volmacht",
@@ -31,6 +33,7 @@ const choices = [
     title: "Verlenen van volmacht",
     description:
       "Geef iemand toestemming om je studentenadministratie in jouw plaats op te volgen.",
+    intent: "secondary" as const,
   },
 ];
 
@@ -55,11 +58,12 @@ export default async function NewRequestTypePage() {
             description="Kies de aanvraag die het beste aansluit bij jouw situatie."
           />
           <div className="grid gap-4 md:grid-cols-3">
-            {choices.map(({ href, icon, title, description }) => (
+            {choices.map(({ href, icon, title, description, intent }) => (
               <ActionCard
                 key={href}
                 href={href}
                 icon={icon}
+                intent={intent}
                 title={title}
                 description={description}
               />

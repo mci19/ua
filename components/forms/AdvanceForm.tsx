@@ -12,16 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Stack } from "@/components/ui/stack";
 import { WizardActions } from "@/components/ui/wizard-actions";
 import { FormField, FormGrid } from "@/components/forms/FormField";
-import { createRequestSchema, type CreateRequestInput } from "@/lib/schemas/request";
+import { advanceSchema, type AdvanceInput } from "@/lib/schemas/request";
 import { FILE_TYPE_CODE } from "@/lib/constants/dossierTypes";
 import { apiFetch, type ClientApiError } from "@/lib/api/fetcher";
 import { currentAcademicYear } from "@/lib/utils/date";
 import { routes } from "@/lib/constants/routes";
-
-type FormValues = Extract<
-  CreateRequestInput,
-  { fileTypeCode: typeof FILE_TYPE_CODE.VOORSCHOT_STUDIETOELAGE }
->;
 
 export function AdvanceForm() {
   const router = useRouter();
@@ -29,8 +24,8 @@ export function AdvanceForm() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(createRequestSchema),
+  } = useForm<AdvanceInput>({
+    resolver: zodResolver(advanceSchema),
     defaultValues: {
       fileTypeCode: FILE_TYPE_CODE.VOORSCHOT_STUDIETOELAGE,
       referenceYear: currentAcademicYear(),
@@ -41,7 +36,7 @@ export function AdvanceForm() {
   });
 
   const create = useMutation({
-    mutationFn: (values: FormValues) =>
+    mutationFn: (values: AdvanceInput) =>
       apiFetch<{ ua_requestid: string }>("/api/requests", {
         method: "POST",
         body: JSON.stringify(values),
