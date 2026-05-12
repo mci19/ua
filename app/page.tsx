@@ -10,7 +10,9 @@ import { listMyRequests } from "@/lib/dataverse/queries";
 
 export default async function OverviewPage() {
   const { auth, student } = await requireStudent();
-  const requests = await listMyRequests(auth, student.contactid).catch(() => []);
+  // Don't swallow errors here — when the request count is wrong we'd rather
+  // see the real error than silently render "0 aanvragen".
+  const requests = await listMyRequests(auth, student.contactid);
   const greeting = student.firstname ?? student.fullname ?? "student";
   const sisaPath = student.ua_sisarequestgranted ? routes.newRequest : routes.sisaGrant;
 
