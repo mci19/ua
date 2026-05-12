@@ -5,24 +5,30 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils/cn";
 
-// Every variant is a filled button with a white label. Use `intent` to pick
-// the colour. There is intentionally no "ghost" or "link" variant on light
-// backgrounds — for inline anchor text, use the <a> element directly with
-// className="ua-link". For dark backgrounds (e.g. Topbar) pass intent="onDark".
+// Every variant is a filled button with a white label. White text is set on
+// the base classes (not per variant) so the colour applies even when the
+// Button wraps a <Link> via `asChild` — Tailwind's preflight `a {
+// color: inherit }` rule is overridden by a class on the element itself.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded font-medium transition-colors disabled:pointer-events-none disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ua-navy focus-visible:ring-offset-2",
+  [
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded font-medium",
+    "text-white transition-colors",
+    "disabled:pointer-events-none disabled:opacity-60",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+  ].join(" "),
   {
     variants: {
       intent: {
-        primary: "bg-ua-navy text-white hover:bg-ua-navy-600 active:bg-ua-navy-700",
+        primary:
+          "bg-ua-navy hover:bg-ua-navy-600 active:bg-ua-navy-700 focus-visible:ring-ua-navy",
         secondary:
-          "bg-ua-red text-white hover:bg-ua-red-600 active:bg-ua-red-700",
+          "bg-ua-red hover:bg-ua-red-600 active:bg-ua-red-700 focus-visible:ring-ua-red",
         subtle:
-          "bg-slate-600 text-white hover:bg-slate-700 active:bg-slate-800",
+          "bg-slate-600 hover:bg-slate-700 active:bg-slate-800 focus-visible:ring-slate-600",
         danger:
-          "bg-ua-red text-white hover:bg-ua-red-600 active:bg-ua-red-700",
+          "bg-ua-red hover:bg-ua-red-600 active:bg-ua-red-700 focus-visible:ring-ua-red",
         onDark:
-          "bg-white/10 text-white hover:bg-white/20 active:bg-white/25",
+          "bg-white/10 hover:bg-white/20 active:bg-white/25 focus-visible:ring-white",
       },
       size: {
         sm: "h-9 px-3 text-small",

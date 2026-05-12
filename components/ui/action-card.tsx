@@ -9,14 +9,17 @@ import { cn } from "@/lib/utils/cn";
 // A big tappable tile. The whole surface is the click target, so it's
 // treated visually like a button: filled brand colour with white text.
 const tileVariants = cva(
-  "block h-full rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+  [
+    "block h-full rounded-lg text-white transition",
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+  ].join(" "),
   {
     variants: {
       intent: {
         primary:
-          "bg-ua-navy text-white hover:bg-ua-navy-600 active:bg-ua-navy-700 focus-visible:ring-ua-navy",
+          "bg-ua-navy hover:bg-ua-navy-600 active:bg-ua-navy-700 focus-visible:ring-ua-navy",
         secondary:
-          "bg-ua-red text-white hover:bg-ua-red-600 active:bg-ua-red-700 focus-visible:ring-ua-red",
+          "bg-ua-red hover:bg-ua-red-600 active:bg-ua-red-700 focus-visible:ring-ua-red",
       },
     },
     defaultVariants: { intent: "primary" },
@@ -44,7 +47,7 @@ export function ActionCard({
       <Stack gap="md" className="h-full p-6">
         <span
           aria-hidden="true"
-          className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white"
+          className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/15"
         >
           <Icon className="h-6 w-6" />
         </span>
