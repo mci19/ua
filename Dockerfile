@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7-labs
 
 # ---- deps ----
-FROM mcr.microsoft.com/mirror/docker/library/node:22-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml* ./
