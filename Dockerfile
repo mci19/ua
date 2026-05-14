@@ -4,7 +4,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 RUN corepack enable
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
 ARG PNPM_FLAGS="--frozen-lockfile"
 RUN if [ -f pnpm-lock.yaml ]; then \
       pnpm install ${PNPM_FLAGS}; \
